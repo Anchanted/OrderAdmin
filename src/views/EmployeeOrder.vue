@@ -1,93 +1,35 @@
 <template>
-      <div id="wrapper">
-        <nav class="navbar navbar-default top-navbar" role="navigation">
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".sidebar-collapse">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-                <div class="navbar-brand"><strong>订餐后台管理</strong></div>
-		        <div id="sideNav" href=""><i class="fa fa-caret-right"></i></div>
-            </div>
-
-            <ul class="nav navbar-top-links navbar-right">
-                <li class="dropdown">
-                    <a class="dropdown-toggle" data-toggle="dropdown" href="#" aria-expanded="false">
-                        <i class="fa fa-user fa-fw"></i> <i class="fa fa-caret-down"></i>
-                    </a>
-                    <ul class="dropdown-menu dropdown-user">
-                        <li><router-link to="/login"><i class="fa fa-user fa-fw"></i>登录</router-link></li>
-                        <li><router-link to="/users"><i class="fa fa-user fa-fw"></i> 用户管理</router-link></li>
-                        <!-- <li><router-link to="/limits"><i class="fa fa-gear fa-fw"></i> 权限管理</router-link></li> -->
-                    </ul>
-                    <!-- /.dropdown-user -->
-                </li>
-                <!-- /.dropdown -->
-            </ul>
-        </nav>
-        <!--/. NAV TOP  -->
-        <nav class="navbar-default navbar-side" role="navigation">
-            <div class="sidebar-collapse">
-                <ul class="nav" id="main-menu">
-                    <!--
-                    <li>
-                        <router-link to="/"><i class="fa fa-dashboard"></i>总览</router-link>
-                    </li>
-                    -->
-                    <li>
-                        <router-link to="/meal"><i class="fa fa-desktop"></i>餐品维护表</router-link>
-                    </li>
-                    <li>
-                        <router-link to="/orderDaily"><i class="fa fa-bar-chart-o"></i>订餐当天统计表</router-link>
-                    </li>
-                    <li>
-                        <router-link to="/orderHistory"><i class="fa fa-qrcode"></i>订餐历史统计表</router-link>
-                    </li>
-
-                    <li>
-                        <router-link to="/deorderHistory" class="active-menu"><i class="fa fa-table"></i>部门订餐历史统计表</router-link>
-                    </li>
-                </ul>
-            </div>
-        </nav>
-        <!-- /. NAV SIDE  -->
-        <div id="page-wrapper" >
-            <div id="page-inner">
-                <table width="100%" border="0" cellspacing="0" cellpadding="0" align="center">
-                    <tr>
-                        <td align="center" class="biaoti" height="60">部门订餐历史统计表</td>
-                    </tr>
-                </table>
-                <div class="personalReport_time" align="left">
-                    <input type="date" :max="this.endTime" value="" v-model="startTime"/>
-                    <input type="date" :min="startTime" :max="this.maxTime" v-model="endTime"/>
-                    <button @click="query" class="but">查询</button>
-                </div>
-                <div align="right">
-                    <button type="primary" v-on:click="exportExcel()">导出表格</button>
-                </div>
-                <table width="30%" border="2" cellspacing="1" cellpadding="4" bgcolor="#cccccc" class="tabtop13" align="center">
-                    <tr>
-                        <td width="10%" class="btbg font-center titfont" >姓名</td>
-                        <td width="10%" class="btbg font-center titfont" >金额</td>
-                        <td width="10%" class="btbg font-center titfont" >员工确认</td>
-                    </tr>
-                    <tr v-for="(order, index) in orderList" :key="index">
-                        <td>{{order.name}}</td>
-                        <td>{{order.num}}</td>
-                        <td width="10%">&nbsp;</td>
-                    </tr>
-                    <!-- <tr>
-                        <td width="10%" class="btbg2">111</td>
-                        <td width="10%" class="btbg2">111</td>
-                        <td width="10%" class="btbg2">111</td>
-                    </tr> -->
-                </table>
-            </div>
-
+    <div id="wrapper">
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" align="center">
+            <tr>
+                <td align="center" class="biaoti" height="60">部门订餐历史统计表</td>
+            </tr>
+        </table>
+        <div class="personalReport_time" align="left">
+            <input type="date" :max="this.endTime" value="" v-model="startTime"/>
+            <input type="date" :min="startTime" :max="this.maxTime" v-model="endTime"/>
+            <button @click="query" class="but">查询</button>
         </div>
+        <div align="right">
+            <button type="primary" v-on:click="exportExcel()">导出表格</button>
+        </div>
+        <table width="30%" border="2" cellspacing="1" cellpadding="4" bgcolor="#cccccc" class="tabtop13" align="center">
+            <tr>
+                <td width="10%" class="btbg font-center titfont" >姓名</td>
+                <td width="10%" class="btbg font-center titfont" >金额</td>
+                <td width="10%" class="btbg font-center titfont" >员工确认</td>
+            </tr>
+            <tr v-for="(order, index) in orderList" :key="index">
+                <td>{{order.name}}</td>
+                <td>{{order.num}}</td>
+                <td width="10%">&nbsp;</td>
+            </tr>
+            <!-- <tr>
+                <td width="10%" class="btbg2">111</td>
+                <td width="10%" class="btbg2">111</td>
+                <td width="10%" class="btbg2">111</td>
+            </tr> -->
+        </table>
     </div>
 </template>
 

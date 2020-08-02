@@ -1,52 +1,58 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import Meal from '../views/Meal.vue'
-import DeOrderHistory from '../views/DeOrderHistory.vue'
-import OrderDaily from '../views/OrderDaily.vue'
-import OrderHistory from '../views/OrderHistory.vue'
-import Login from '../views/Login.vue'
-import Users from '../views/user/Users.vue'
-import Limits from '../views/Limits.vue'
-import PageNotFound from '../views/404'
+import store from 'store'
 
+import Meal from 'views/Meal.vue'
+import EmployeeOrder from 'views/EmployeeOrder.vue'
+import DailyOrder from 'views/DailyOrder.vue'
+import HistoryOrder from 'views/HistoryOrder.vue'
+import Login from 'views/Login.vue'
+import User from 'views/user/User.vue'
+import PageNotFound from 'views/404'
 
 Vue.use(VueRouter)
 
 const routes = [
-  {
-    path: "*",
-    component: PageNotFound,
-    name: 'PageNotFound'
-  },
-  {
-    path: '/meal',
-    name: 'Meal',
-    component: Meal
-  },
-  {
-    path: '/deOrderHistory',
-    name: 'DeOrderHistory',
-    component: DeOrderHistory
-  },
-  {
-    path: '/orderDaily',
-    name: 'OrderDaily',
-    component: OrderDaily
-  },
-  {
-    path: '/orderHistory',
-    name: 'OrderHistory',
-    component: OrderHistory
-  },
-  {
-    path: '/login',
-    name: 'Login',
-    component: Login
-  },
-  {
-    path: '/users',
-    name: 'Users',
-    component: Users,
+    {
+        path: "*",
+        component: PageNotFound,
+        name: 'PageNotFound',
+        meta: {
+            hideNav: true
+        }                       
+    },
+    {
+        path: '/login',
+        name: 'Login',
+        component: Login,
+        meta:{
+            hideNav: true
+        }
+    },
+    {
+        path: '/',
+        name: 'Meal',
+        component: Meal
+    },
+    {
+        path: '/dailyorder',
+        name: 'DailyOrder',
+        component: DailyOrder
+    },
+    {
+        path: '/historyorder',
+        name: 'HistoryOrder',
+        component: HistoryOrder
+    },
+    {
+        path: '/employeeorder',
+        name: 'EmployeeOrder',
+        component: EmployeeOrder
+    },
+    {
+        path: '/user',
+        name: 'User',
+        component: User,
     // children: [
     //   {
     //     path: "all",
@@ -57,19 +63,19 @@ const routes = [
     //     component: UserSingle
     //   }
     // ]
-  },
-  {
-    path: '/limits',
-    name: 'Limits',
-    component: Limits
-  }
+    }
 ]
 
 const router = new VueRouter({
-  mode: 'history',
-  // base: process.env.BASE_URL,
-  base: process.env.NODE_ENV === "production" ? "/ordermeal/" : "/",
-  routes
+    mode: 'history',
+    // base: process.env.BASE_URL,
+    base: process.env.NODE_ENV === "production" ? "/ordermeal/" : "/",
+    routes
+})
+
+router.beforeEach((to, from, next) => {
+    if (to.name !== "Login" && store.state.user == null) next({ name: "Login" })
+    else next()
 })
 
 export default router

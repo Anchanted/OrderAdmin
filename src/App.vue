@@ -1,60 +1,132 @@
 <template>
-  <div id="app">
-    <!--
-    <div id="nav">
-      <router-link to="/">index</router-link> |
-      <router-link to="/meal">meal</router-link>
-      <router-link to="/orderDaily">OrderDaily</router-link>
-      <router-link to="/about">About</router-link>
-    </div> 
-    -->
-    <router-view/>
-  </div>
+    <div id="app">
+        <div class="content-page" v-if="!$route.meta.hideNav">
+            <div class="vertical-navbar border-right border-secondary">
+                <div class="system-title text-white">订餐后台管理</div>
+                <b-list-group>
+                    <b-list-group-item :to="{ name: 'Meal' }" :active="$route.name === 'Meal'">餐品维护</b-list-group-item>
+                    <b-list-group-item :to="{ name: 'DailyOrder' }" :active="$route.name === 'DailyOrder'">部门当日订餐单据</b-list-group-item>
+                    <b-list-group-item :to="{ name: 'HistoryOrder' }" :active="$route.name === 'HistoryOrder'">部门历史订单统计</b-list-group-item>
+                    <b-list-group-item :to="{ name: 'EmployeeOrder' }" :active="$route.name === 'EmployeeOrder'">部门员工订单详情</b-list-group-item>
+                    <b-list-group-item :to="{ name: 'User' }" :active="$route.name === 'User'">用户管理</b-list-group-item>
+                </b-list-group>
+            </div>
+            <div class="content">
+                <div v-if="user != null" class="top-bar">
+                    <div>欢迎，{{user.username}}</div>
+                    <b-button variant="link" @click="logout">登出</b-button>
+                </div>
+                <b-link v-else :to="{ name: 'Login' }">登录</b-link>
+                <router-view />
+            </div>
+        </div>
+        <router-view v-else/>
+    </div>
 </template>
 
 <script>
-// import jquery from "@/assets/js/jquery-1.10.2.js"
-// import bootstrapmin from "@/assets/js/bootstrap.min.js"
-// import jquerymetisMenu from "@/assets/js/jquery.metisMenu.js"
-// import raphael from "@/assets/js/morris/raphael-2.1.0.min.js"
-// import morris from "@/assets/js/morris/morris.js"
-// import easypiechart from "@/assets/js/easypiechart.js"
-// import easypiechartdata from "@/assets/js/easypiechart-data.js"
-// import jquerychart from "@/assets/js/Lightweight-Chart/jquery.chart.js"
+import { mapState } from "vuex"
 
 export default {
-  
+    computed: {
+        ...mapState({
+            user: state => state.user
+        })
+    },
+    methods: {
+        logout() {
+            this.$store.commit("setUser", null)
+            this.$router.push({
+                name: "Login"
+            })
+        }
+    }
 }
 </script>
 
-<style lang="less">
-@import "assets/css/bootstrap.css";
-@import "assets/css/bootstrap-theme.min.css";
-@import "assets/css/font-awesome.css";
-@import "assets/js/morris/morris-0.4.3.min.css";
-@import "assets/css/custom-styles.css";
-@import "assets/js/Lightweight-Chart/cssCharts.css";
-@import "assets/css/tables.css";
-
+<style lang="scss">
+html, body {
+    width: 100%;
+    height: 100%;
+    font-size: 16px;
+}
 
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-}
+    font-family: Avenir, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-align: center;
+    width: 100%;
+    height: 100%;
+    color: #6c757d;
 
-#nav {
-  padding: 30px;
+    .content-page {
+        width: 100%;
+        height: auto;
+        min-height: 100%;
+        position: relative;
+        display: flex;
 
-  a {
-    font-weight: bold;
-    color: #2c3e50;
+        .vertical-navbar {
+            width: 300px;
+            height: 100%;
+            flex-shrink: 0;
+            background-color: #313a46;
 
-    &.router-link-exact-active {
-      color: #42b983;
+            .system-title {
+                height: 70px;
+                line-height: 70px;
+                font-size: 1.5rem;
+                font-weight: bold;
+            }
+
+            .list-group-item {
+                padding: 20px;
+                font-size: 1.2rem;
+                border-left: none;
+                border-right: none;
+                background-color: #313a46;
+                color: #8391a2;
+            }
+
+            .list-group-item.active {
+                color: #ffffff;
+                border-color: rgba(0, 0, 0, 0.125);
+            }
+
+            .list-group-item-action {
+                &:hover, &:focus {
+                    background-color: #727df5;
+                    color: #ffffff;
+                }
+            }
+        }
+
+        .content {
+            height: auto;
+            background-color: #fafbfe;
+            flex-grow: 1;
+            padding: 70px 20px 0;
+            position: relative;
+
+            >div {
+                position: relative;
+            }
+
+            .top-bar {
+                width: 100%;
+                height: 70px;
+                display: flex;
+                justify-content: flex-end;
+                align-items: center;
+                background-color: #ffffff;
+                position: absolute;
+                top: 0;
+                left: 0;
+            }
+        }
     }
-  }
+
 }
+
 </style>

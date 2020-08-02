@@ -1,128 +1,59 @@
 <template>
-      <div id="wrapper">
-        <nav class="navbar navbar-default top-navbar" role="navigation">
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".sidebar-collapse">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-                <div class="navbar-brand"><strong>订餐后台管理</strong></div>
-                <div id="sideNav" href=""><i class="fa fa-caret-right"></i></div>
-            </div>
+    <div class="meal-page">
+        <!-- <div align="right">
+            <button type="primary" v-on:click="exportExcel()">导出表格</button>
+        </div> -->
+        <div class="datepicker-wrapper">
+            <b-form-datepicker id="datepicker" class="mb-2" 
+                v-model="selectedDateStr" locale="zh" v-bind="labels" hide-header start-weekday="1"
+                :date-format-options="{ year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' }"
+                @input="chooseDate"></b-form-datepicker>
+        </div>
 
-            <ul class="nav navbar-top-links navbar-right">
-                <li class="dropdown">
-                    <a class="dropdown-toggle" data-toggle="dropdown" href="#" aria-expanded="false">
-                        <i class="fa fa-user fa-fw"></i> <i class="fa fa-caret-down"></i>
-                    </a>
-                    <ul class="dropdown-menu dropdown-user">
-                        <li><router-link to="/login"><i class="fa fa-user fa-fw"></i>登录</router-link></li>
-                        <li><router-link to="/users"><i class="fa fa-user fa-fw"></i> 用户管理</router-link></li>
-                        <!-- <li><router-link to="/limits"><i class="fa fa-gear fa-fw"></i> 权限管理</router-link></li> -->
-                    </ul>
-                    <!-- /.dropdown-user -->
-                </li>
-                <!-- /.dropdown -->
-            </ul>
-        </nav>
-        <!--/. NAV TOP  -->
-        <nav class="navbar-default navbar-side" role="navigation">
-            <div class="sidebar-collapse">
-                <ul class="nav" id="main-menu">
-                    <!--
-                    <li>
-                        <router-link to="/"><i class="fa fa-dashboard"></i>总览</router-link>
-                    </li>
-                    -->
-                    <li>
-                        <router-link to="/meal" class="active-menu"><i class="fa fa-desktop"></i>餐品维护表</router-link>
-                    </li>
-                    <li>
-                        <router-link to="/orderDaily"><i class="fa fa-bar-chart-o"></i>订餐当天统计表</router-link>
-                    </li>
-                    <li>
-                        <router-link to="/orderHistory"><i class="fa fa-qrcode"></i>订餐历史统计表</router-link>
-                    </li>
-                    <li>
-                        <router-link to="/deorderHistory"><i class="fa fa-table"></i>部门订餐历史统计表</router-link>
-                    </li>
-                </ul>
-            </div>
-
-        </nav>
-        <!-- /. NAV SIDE  -->
-        <div id="page-wrapper">
-            <div id="page-inner">
-                <table width="100%" border="0" cellspacing="0" cellpadding="0" align="center">
-                    <tr>
-                        <td align="center" class="biaoti" height="60">餐品维护表</td>
-                    </tr>
-                </table>
-                <!-- <div align="right">
-                    <button type="primary" v-on:click="exportExcel()">导出表格</button>
-                </div> -->
-                <div class="personalReport_time" align="left">
-                    <input type="date" :max="this.endTime" value="" v-model="startTime"/>
-                    <input type="date" :min="startTime" :max="this.maxTime" v-model="endTime"/>
-                    <button @click="choose" class="but">查询</button>
-                </div>
-                <!-- <table class="personalReport_date">
-                    <tr>
-                        <td @click="query('today')">今天</td>
-                        <td @click="query('yesterday')">昨天</td>
-                        <td @click="query('weeks')">本周</td>
-                        <td @click="query('lastWeek')">上周</td>
-                        <td @click="query('month')">本月</td>
-                        <td @click="query('lastMonth')">上月</td>
-                    </tr>
-                </table>
-                <ul class="personalReport_date">
-                    <li @click="query('today')">今天</li>
-                    <li @click="query('yesterday')">昨天</li>
-                    <li @click="query('weeks')">本周</li>
-                    <li @click="query('lastWeek')">上周</li>
-                    <li @click="query('month')">本月</li>
-                    <li @click="query('lastMonth')">上月</li>
-                </ul> -->
-                <!-- <div>
-                    <button @click="query" class="but">查询</button>
-                </div> -->
-                <table width="100%" border="2" cellspacing="1" cellpadding="4" bgcolor="#cccccc" class="tabtop13" align="center" style="font-size:20px">
-                    
-                    <tr height="20">
-                        <td colspan="1" width="5%" class="btbg font-center titfont" >日期</td>
-                        <td colspan="1" width="5%" class="btbg font-center titfont" >餐品类别</td>
-                        <td colspan="1" width="5%" class="btbg font-center titfont" >套餐类别</td>
-                        <td colspan="6" width="10%" class="btbg font-center titfont" >餐品名称</td>
-                        <td colspan="6" width="10%" class="btbg font-center titfont" >管理</td>
-                    </tr>
-                    
+        <b-card>
+            <b-table-simple bordered>
+                <b-thead>
+                    <b-tr>
+                        <b-th rowspan="2">日期</b-th>
+                        <b-th rowspan="2">餐品类别</b-th>
+                        <b-th rowspan="2">套餐类别</b-th>
+                        <b-th colspan="6">餐品名称</b-th>
+                        <b-th rowspan="2">管理</b-th>
+                    </b-tr>
+                    <b-tr>
+                        <b-th>1</b-th>
+                        <b-th>2</b-th>
+                        <b-th>3</b-th>
+                        <b-th>4</b-th>
+                        <b-th>5</b-th>
+                        <b-th>6</b-th>
+                    </b-tr>
+                </b-thead>
+                <b-tbody>
                     <template v-for="(day, i) in menuList">
                         <template v-for="(mealType, j) in day">
                             <template v-for="(course, k) in mealType">
-                                <tr :key="`${i}-${j}-${k}`" height="20">
-                                    <td width="5%" rowspan="6" class="btbg1 font-center" v-if="j === 0 && k === 0">{{dateList[i]}}</td>
-                                    <td width="5%" rowspan="2" class="btbg2" v-if="k === 0">{{mealTypeList[j]}}</td>
-                                    <td width="5%"  class="btbg2">{{courseTypeList[k]}}</td>
-                                    <td v-for="n in 6" :key="n" 
-                                        width="7%"  class="btbg2 dish-text-wrapper">
-                                        <span v-if="textChanged(i, j, k, n-1)" style="color: red;">{{!oldMenuList[i][j][k].dishList[n-1] ? "（无）" : oldMenuList[i][j][k].dishList[n-1]}}</span>
-                                        <input class="dish-input" type="text" v-model="course.dishList[n-1]" @blur="changeName(i, j, k, n-1)">
-                                    </td>
-                                    <td class="btbg2"><button type="primary" v-on:click="insert(i, j, k)" :disabled="disableInsert(i, j, k)">插入</button></td>
-                                    <td class="btbg2"><button type="primary" v-on:click="update(i, j, k)" :disabled="disableUpdate(i, j, k)">修改</button></td>
-                                </tr>
+                                <b-tr :key="`${i}-${j}-${k}`" height="20">
+                                    <b-td rowspan="6" v-if="j === 0 && k === 0" v-html="new Date(dateList[i]).pattern('yyyy-MM-dd<br>EE')"></b-td>
+                                    <b-td rowspan="2" v-if="k === 0">{{mealTypeList[j]}}</b-td>
+                                    <b-td>{{courseTypeList[k]}}</b-td>
+                                    <b-td v-for="n in 6" :key="n">
+                                        <div v-if="textChanged(i, j, k, n-1)" style="color: red; margin-bottom: 10px; text-align: left;">{{!oldMenuList[i][j][k].dishList[n-1] ? "（无）" : oldMenuList[i][j][k].dishList[n-1]}}</div>
+                                        <input style="width: 150px;" type="text" v-model="course.dishList[n-1]">
+                                    </b-td>
+                                    <b-td>
+                                        <b-button-group>
+                                            <b-button @click="insert(i, j, k)" :disabled="disableInsert(i, j, k)">插入</b-button>
+                                            <b-button @click="update(i, j, k)" :disabled="disableUpdate(i, j, k)">修改</b-button>
+                                        </b-button-group>
+                                    </b-td>
+                                </b-tr>
                             </template>
                         </template>
                     </template>
-                </table>
-            </div>
-
-            <!-- /. PAGE INNER  -->
-        <!-- /. PAGE WRAPPER  -->
-        </div>
+                </b-tbody>
+            </b-table-simple>
+        </b-card>
     </div>
 </template>
 
@@ -130,16 +61,29 @@
 export default {
     data() {
         return {
-            startTime: "",
-            endTime: "",
+            selectedDateStr: "",
             maxTime: "",
             menuList: [],
             dateList: [],
             mealTypeList: ["早餐", "午餐", "晚餐"],
             courseTypeList: ["A", "B"],
             oldMenuList: [],
-            food1: "无",
-            id:""
+            labels: {
+                weekdayHeaderFormat: 'narrow',
+                labelPrevDecade: '过去十年',
+                labelPrevYear: '上一年',
+                labelPrevMonth: '上个月',
+                labelCurrentMonth: '当前月份',
+                labelNextMonth: '下个月',
+                labelNextYear: '明年',
+                labelNextDecade: '下一个十年',
+                labelToday: '今天',
+                labelSelected: '选定日期',
+                labelNoDateSelected: '未选择日期',
+                labelCalendar: '日历',
+                labelNav: '日历导航',
+                labelHelp: '使用光标键浏览日期'
+            }
         }
     },
     computed: {
@@ -168,31 +112,17 @@ export default {
         }
     },
     methods:{
-        getDateFormat(date) {
-            const year = date.getFullYear()
-            const month = `${date.getMonth() + 1 < 10 ? "0" : ""}${date.getMonth() + 1}`
-            const day = `${date.getDate() < 10 ? "0" : ""}${date.getDate()}`
+        chooseDate() {
+            console.log(this.selectedDateStr)
+            const selectedDate = new Date(this.selectedDateStr)
+            const selectedWeekday =selectedDate.getDay() == 0 ? 7 :selectedDate.getDay()
+            const monday = new Date(selectedDate.getTime() + (1 - selectedWeekday) * 24 * 3600 * 1000)
+            const sunday = new Date(selectedDate.getTime() + (7 - selectedWeekday) * 24 * 3600 * 1000)
 
-            let concat = "-"
-
-            return `${year}${concat}${month}${concat}${day}`
-        },
-        choose() {
-            console.log(this.startTime, this.endTime)
-            const startDate = new Date(this.startTime)
-            const endDate = new Date(this.endTime)
-
-//             const weekday = selectedDay.getDay() == 0 ? 7 : selectedDay.getDay()
-//             const hour = selectedDay.getHours()
-
-//             const monday = new Date(selectedDay.getTime() + (1 - weekday) * 24 * 3600 * 1000)
-//             const sunday = new Date(selectedDay.getTime() + (7 - weekday) * 24 * 3600 * 1000)
             const dateList = []
             for (let i = 0; i < 7; i++) {
-                const monday = new Date(this.startTime)
                 const thisday = new Date(monday.getTime() + i * 24 * 3600 * 1000)
-                
-                dateList.push(this.getDateFormat(thisday))
+                dateList.push(thisday)
             }
             this.dateList = dateList
 
@@ -305,10 +235,6 @@ export default {
             //         console.log(error)
             //     })
         },
-        changeName(i, j, k, n) {
-            console.log(this.menuList[i][j][k].dishList[n])
-            console.log(this.oldMenuList[i][j][k].dishList[n])
-        },
         // // 导出表格
         // exportExcel() {
         // require.ensure([], () => {
@@ -328,117 +254,38 @@ export default {
         // formatJson(filterVal, jsonData) {
         //     return jsonData.map(v => filterVal.map(j => v[j]));
         // },
-
-        //获取时间、
-        //时间解析;
-        Time:function(now)  {
-            let year=new Date(now).getFullYear();
-            let month=new Date(now).getMonth()+1;
-            let date=new Date(now).getDate();
-            if (month < 10) month = "0" + month;
-            if (date < 10) date = "0" + date;
-            return  year+"-"+month+"-"+date
-        },
-        //本周第一天；
-        showWeekFirstDay:function(){
-            let Nowdate=new Date();
-            let WeekFirstDay=new Date(Nowdate-(Nowdate.getDay()-1)*86400000);
-            let M=Number(WeekFirstDay.getMonth())+1;
-            if(M<10){
-                M="0"+M;
-            }
-            let D=WeekFirstDay.getDate();
-            if(D<10){
-                D="0"+D;
-            }
-            return WeekFirstDay.getFullYear()+"-"+M+"-"+D;
-        },
-        //本周最后一天
-        showWeekLastDay:function (){
-            let Nowdate=new Date();
-            let WeekFirstDay=new Date(Nowdate-(Nowdate.getDay()-1)*86400000);
-            let WeekLastDay=new Date((WeekFirstDay/1000+6*86400)*1000);
-            let M=Number(WeekLastDay.getMonth())+1;
-            if(M<10){
-                M="0"+M;
-            }
-            let D=WeekLastDay.getDate();
-            if(D<10){
-                D="0"+D;
-            }
-            return WeekLastDay.getFullYear()+"-"+M+"-"+D;
-        },
-        //获得某月的天数：
-        getMonthDays:function (myMonth){
-            let monthStartDate = new Date(new Date().getFullYear(), myMonth, 1);
-            let monthEndDate = new Date(new Date().getFullYear(), myMonth + 1, 1);
-            let  days  =  (monthEndDate  -  monthStartDate)/(1000  *  60  *  60  *  24);
-            return  days;
-        },
-        //点击事件
-        query:function (way) {
-            let self=this;
-            this.$refs.pag.currentPage=1;
-            this.page=this.$refs.pag.currentPage;
-            switch (way){
-                case 'today':
-                this.startTime=this.maxTime;
-                this.endTime=this.maxTime;
-                break;
-                case 'yesterday':
-                this.startTime=this.Time(new Date().getTime()-24*60*60*1000);
-                this.endTime=this.Time(new Date().getTime()-24*60*60*1000);
-                break;
-                case 'weeks':
-                this.startTime=this.showWeekFirstDay();
-                this.endTime=this.maxTime;
-                break;
-                case 'lastWeek':
-                this.startTime=this.Time(new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()-new Date().getDay()-6));
-                this.endTime=this.Time(new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()+(6-new Date().getDay()-6)));
-                break;
-                case 'month':
-                this.startTime=this.Time(new Date(new Date().getFullYear(), new Date().getMonth(),1));
-                this.endTime=this.maxTime;
-                break;
-                case 'lastMonth':
-                this.startTime=this.Time(new Date(new Date().getFullYear(),new Date().getMonth()-1,1));
-                this.endTime=this.Time(new Date(new Date().getFullYear(),new Date().getMonth()-1,this.getMonthDays(new Date().getMonth()-1)));
-                break;
-            }
-            this.$axios({
-                method:'post',
-                url:'/inter/user/queryMemberReport',
-                data:{
-                    'account':this.account,
-                    'baseLotteryId':this.lottersId,
-                    'startTime':this.startTime,
-                    'endTime':this.endTime
-                }
-            }).then(function (data) {
-                //    console.log(data)
-            }).catch(function (error) {
-                console.log(error);
-            })
-        }
+    },
+    mounted() {
+        this.selectedDateStr = new Date().pattern("yyyy-MM-dd")
+        this.chooseDate()
     }
 }
 
 </script>
 
-<style>
-.dish-text-wrapper {
-    /* display: flex;
-    flex-direction: column;
-    align-items: center; */
-}
-
-.dish-text-wrapper span, .dish-text-wrapper input {
-    display: block;
+<style lang="scss">
+.meal-page {
     width: 100%;
-}
 
-.dish-input {
-    width: 150px;
+    .datepicker-wrapper {
+        width: 100%;
+        height: 60px;
+        display: flex;
+        align-items: center;
+
+        .b-form-datepicker {
+            width: 250px;
+            margin: 0 !important;
+        }
+    }
+
+    .b-table {
+
+        th, td {
+            white-space: nowrap;
+            vertical-align: middle;
+            padding: 0.5rem;
+        }
+    }
 }
 </style>

@@ -1,99 +1,32 @@
 <template>
-    <div id="wrapper">
-        <nav class="navbar navbar-default top-navbar" role="navigation">
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".sidebar-collapse">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-                <div class="navbar-brand"><strong>订餐后台管理</strong></div>
-		        <div id="sideNav" href=""><i class="fa fa-caret-right"></i></div>
-            </div>
+    <div class="login-page">
+        <div class="login-title">移动点餐后台管理平台</div>
+        <b-card class="form-wrapper">
+            <div v-if="failure" style="color: red;">用户名或密码错误</div>
+            <b-form @submit.prevent="onSubmit">
+                <b-form-group id="input-group-1" label="用户名：" label-for="input-1" label-cols="2" label-align="right">
+                    <b-form-input
+                        id="input-1"
+                        v-model="username"
+                        type="text"
+                        required
+                        placeholder="请输入用户名"
+                    ></b-form-input>
+                </b-form-group>
 
-        <ul class="nav navbar-top-links navbar-right">
-            <!-- /.dropdown -->
-            <li class="dropdown">
-                <a class="dropdown-toggle" data-toggle="dropdown" href="#" aria-expanded="false">
-                    <i class="fa fa-user fa-fw"></i> <i class="fa fa-caret-down"></i>
-                </a>
-                <ul class="dropdown-menu dropdown-user">
-                        <li><router-link to="/login"><i class="fa fa-user fa-fw"></i>登录</router-link></li>
-                        <li><router-link to="/login"><i class="fa fa-user fa-fw"></i> 用户管理</router-link></li>
-                        <!-- <li><router-link to="/limits"><i class="fa fa-gear fa-fw"></i> 权限管理</router-link></li> -->
-                </ul>
-                <!-- /.dropdown-user -->
-            </li>
-            <!-- /.dropdown -->
-        </ul>
-    </nav>
-    <!--/. NAV TOP  -->
-    <nav class="navbar-default navbar-side" role="navigation">
-        <div class="sidebar-collapse">
-            <ul class="nav" id="main-menu">
-                <!--
-                    <li>
-                        <router-link to="/"><i class="fa fa-dashboard"></i>总览</router-link>
-                    </li>
-                -->
-                    <li>
-                        <router-link to="/login"><i class="fa fa-desktop"></i>餐品维护表</router-link>
-                    </li>
-                    <li>
-                        <router-link to="/login"><i class="fa fa-bar-chart-o"></i>订餐当天统计表</router-link>
-                    </li>
-                    <li>
-                        <router-link to="/login"><i class="fa fa-qrcode"></i>订餐历史统计表</router-link>
-                    </li>
-                    <li>
-                        <router-link to="/login"><i class="fa fa-table"></i>部门订餐历史统计表</router-link>
-                    </li>
-            </ul>
-        </div>
+                <b-form-group id="input-group-2" label="密码：" label-for="input-2" label-cols="2" label-align="right">
+                    <b-form-input
+                        id="input-2"
+                        v-model="password"
+                        type="password"
+                        required
+                        placeholder="请输入密码"
+                    ></b-form-input>
+                </b-form-group>
 
-    </nav>
-    <!-- /. NAV SIDE  -->
-        <div id="page-wrapper">
-            <div id="page-inner">
-                <div>
-                    <form @submit.prevent="login">
-                        <table align="center" valign="center" width="50%" border="0">
-                            <tr class="biaoti" style="width: 10%;height: 40px;font-size: 40px;">用户登录</tr>
-                        </table>
-                        <table align="center" valign="center" width="50%" border="0">
-                            <tr>
-                                <td bgcolor="#4682B4" style="height: 40px;font-size: 20px;align-content: center;" border="1">
-                                    账号：
-                                </td>
-                                <td>
-                                    <input bgcolor="#6A5ACD" type="text" name="username" placeholder="请输入账号" style="width: 100%;height: 40px;font-size: 20px;"
-                                        v-model="username">
-                                </td>
-                            </tr>
-                            <tr>
-                                <td bgcolor="#4682B4" style="height: 40px;font-size: 20px;" border="1">
-                                    密码：
-                                </td>
-                                <td>
-                                    <input bgcolor="#6A5ACD" type="password" name="password" placeholder="请输入密码" style="width: 100%;height: 40px;font-size: 20px;"
-                                        v-model="password">
-                                <!-- type="password"-->
-                                </td>
-                            </tr>
-                            <tr>
-                                <td colspan="5" rowspan="3" style="align-content: center;width: 80%;height: 40px">
-                                    <input type="submit" value="登录">
-                                </td>
-                            </tr>
-                        </table>
-                    </form>
-                </div>
-                <div v-if="failure" style="color: red;">用户名或密码错误</div>
-            </div>
-        <!-- /. PAGE INNER  -->
-        </div>
-    <!-- /. PAGE WRAPPER  -->
+                <b-button type="submit" variant="primary">提交</b-button>
+            </b-form>
+        </b-card>
     </div>
 </template>
 
@@ -108,19 +41,22 @@ export default {
     },
 
     methods: {
-        login() {
-            // { telephone: "13833759376", password: "010337" }
+        onSubmit(e) {
             this.$api.post("/api/ulogin", { telephone: this.username, password: this.password })
                 .then(data => {
                     console.log(data)
-                    console.log("跳转页面")
-                    this.$router.push({
-                        name: "Meal"
-                    })
+                    const user = data.data
+                    if (user.roleId !== 1) this.failure = true
+                    else {
+                        this.$store.commit("setUser", user)
+                        this.$router.push({
+                            path: "/"
+                        })
+                    }
                 })
                 .catch(error => {
-                    this.failure = true
                     console.log(error)
+                    this.failure = true
                 })
         }
     },
@@ -130,5 +66,25 @@ export default {
 }
 </script>
 
-<style>
+<style lang="scss">
+.login-page {
+    width: 100%;
+    height: 100%;
+    background-color: #fafbfe;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    .login-title {
+        font-size: 30px;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+
+    .form-wrapper {
+        width: 500px;
+        margin-bottom: 100px;
+    }
+}
 </style>
