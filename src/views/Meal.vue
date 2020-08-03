@@ -1,18 +1,20 @@
 <template>
     <div class="meal-page">
-        <!-- <div align="right">
-            <button type="primary" v-on:click="exportExcel()">导出表格</button>
-        </div> -->
+        <b-alert variant="danger" :show="!!errMsg">{{errMsg}}</b-alert>
+        <div v-if="loading" class="loading-wrapper">
+            <b-spinner style="width: 160px; height: 160px;" variant="secondary" label="Spinning" type="grow"></b-spinner>
+        </div>
+        
         <div class="datepicker-wrapper">
             <b-form-datepicker id="datepicker" class="mb-2" 
-                v-model="selectedDateStr" locale="zh" v-bind="labels" hide-header start-weekday="1"
+                v-model="selectedDateStr" locale="zh" v-bind="labels" hide-header
                 :date-format-options="{ year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' }"
                 @input="chooseDate"></b-form-datepicker>
         </div>
 
         <b-card>
             <b-table-simple bordered>
-                <b-thead>
+                <b-thead head-variant="light">
                     <b-tr>
                         <b-th rowspan="2">日期</b-th>
                         <b-th rowspan="2">餐品类别</b-th>
@@ -43,8 +45,8 @@
                                     </b-td>
                                     <b-td>
                                         <b-button-group>
-                                            <b-button @click="insert(i, j, k)" :disabled="disableInsert(i, j, k)">插入</b-button>
-                                            <b-button @click="update(i, j, k)" :disabled="disableUpdate(i, j, k)">修改</b-button>
+                                            <b-button :disabled="disableInsert(i, j, k)" @click="insert(i, j, k)">添加</b-button>
+                                            <b-button :disabled="disableUpdate(i, j, k)" @click="update(i, j, k)">修改</b-button>
                                         </b-button-group>
                                     </b-td>
                                 </b-tr>
@@ -62,28 +64,13 @@ export default {
     data() {
         return {
             selectedDateStr: "",
-            maxTime: "",
             menuList: [],
+            oldMenuList: [],
             dateList: [],
             mealTypeList: ["早餐", "午餐", "晚餐"],
             courseTypeList: ["A", "B"],
-            oldMenuList: [],
-            labels: {
-                weekdayHeaderFormat: 'narrow',
-                labelPrevDecade: '过去十年',
-                labelPrevYear: '上一年',
-                labelPrevMonth: '上个月',
-                labelCurrentMonth: '当前月份',
-                labelNextMonth: '下个月',
-                labelNextYear: '明年',
-                labelNextDecade: '下一个十年',
-                labelToday: '今天',
-                labelSelected: '选定日期',
-                labelNoDateSelected: '未选择日期',
-                labelCalendar: '日历',
-                labelNav: '日历导航',
-                labelHelp: '使用光标键浏览日期'
-            }
+            loading: false,
+            errMsg: "",
         }
     },
     computed: {
@@ -113,8 +100,7 @@ export default {
     },
     methods:{
         chooseDate() {
-            console.log(this.selectedDateStr)
-            const selectedDate = new Date(this.selectedDateStr)
+            const selectedDate = new Date(`${this.selectedDateStr} 00:00:00`)
             const selectedWeekday =selectedDate.getDay() == 0 ? 7 :selectedDate.getDay()
             const monday = new Date(selectedDate.getTime() + (1 - selectedWeekday) * 24 * 3600 * 1000)
             const sunday = new Date(selectedDate.getTime() + (7 - selectedWeekday) * 24 * 3600 * 1000)
@@ -148,38 +134,42 @@ export default {
 
             const oldMenuList = JSON.parse(JSON.stringify(menuList))
 
+            this.errMsg = ""
+            this.loading = true
             this.$api.get("/api/Food/ByEtime", { 
                     pageNum: 1,
                     pageSize: 50,
-                    timeStart: this.startTime,
-                    timeEnd: this.endTime
+                    timeStart: monday.pattern("yyyy-MM-dd"),
+                    timeEnd: sunday.pattern("yyyy-MM-dd")
                 })
-                .then(res => {
-                    console.log(res)
-                    console.log(res.data.list)
-                    
-                    const courseList = res.data.list
-                    // Arrange response data
-                    courseList.forEach(course => {
-                        const weekday = course.weekId
-                        const mealType = Math.floor((course.typeId - 1) / 2) + 1
-                        const courseIndex = (course.typeId - 1) % 2
-                        
+                .then(data => {
+                    console.log(data)
+                    const courseList = data.data.list
+                    // Arrange response data
+                    courseList.forEach(course => {
+                        const weekday = course.weekId
+                        const mealType = Math.floor((course.typeId - 1) / 2) + 1
+                        const courseIndex = (course.typeId - 1) % 2
+
                         menuList[weekday - 1][mealType - 1][courseIndex].id = course.id
-                        for (let key in course) {
+                        for (let key in course) {
                             const foodFieldMatch = key.match(/^food(\d+)$/i)
-                            if (foodFieldMatch) {
-                                menuList[weekday - 1][mealType - 1][courseIndex].dishList[parseInt(foodFieldMatch[1]) - 1] = course[key].trim().replace(/[\r\n]/g, "")
-                            }
-                        }
-                    })
-                    console.log(menuList)
+                            if (foodFieldMatch) {
+                                menuList[weekday - 1][mealType - 1][courseIndex].dishList[parseInt(foodFieldMatch[1]) - 1] = course[key].trim().replace(/[\r\n]/g, "")
+                            }
+                        }
+                    })
+                    console.log(menuList)
                     this.menuList = menuList
                     this.oldMenuList = JSON.parse(JSON.stringify(menuList))
+                    this.loading = false
                 })
                 .catch(error => {
-                    this.failure = true
                     console.log(error)
+                    this.menuList = []
+                    this.oldMenuList = []
+                    this.errMsg = "菜单加载失败，请重试"
+                    this.loading = false
                 })
         },
         update(i, j, k) {
@@ -188,52 +178,50 @@ export default {
             }
             for (let n = 0; n < 6; n++) {
                 if (this.menuList[i][j][k].dishList[n] !== this.oldMenuList[i][j][k].dishList[n]) {
-                    params[`food${n + 1}`] = this.menuList[i][j][k].dishList[n]
+                    params[`food${n + 1}`] = (this.menuList[i][j][k].dishList[n] || "").trim().replace(/[\r\n]/g, "")
                 }
             }
             console.log(params)
-
+            this.errMsg = ""
+            this.loading = true
             this.$api.get("/api/Food/Updata", params)
                 .then(data => {
                     console.log(data)
                     if (data.result) {
-                        this.$router.go(0)
+                        this.chooseDate()
                     }
+                    this.loading = false
                 })
                 .catch(error => {
-                    this.failure = true
                     console.log(error)
+                    this.errMsg = `${this.dateList[i]}${this.mealTypeList[j]}${this.courseTypeList[k]}菜品修改失败，请重试`
+                    this.loading = false
                 })
         },
         insert(i, j, k) {
-            const params = {}
+            const params = {
+                typeId: j * 2 + k + 1,
+                etime: this.dateList[i].pattern("yyyy-MM-dd HH:mm:ss")
+            }
             for (let n = 0; n < 6; n++) {
-                if (this.oldMenuList[i][j][k].dishList[n] == null) {
-                    params[`food${n + 1}`] = this.menuList[i][j][k].dishList[n]
-                }
+                params[`food${n + 1}`] = (this.menuList[i][j][k].dishList[n] || "").trim().replace(/[\r\n]/g, "")
             }
             console.log(params)
+            this.errMsg = ""
+            this.loading = true
             this.$api.get("/api/Food/Insert", params)
                 .then(data => {
                     console.log(data)
                     if (data.result) {
-                        this.$router.go(0)
+                        this.chooseDate()
                     }
+                    this.loading = false
                 })
                 .catch(error => {
-                    this.failure = true
                     console.log(error)
+                    this.errMsg = `${this.dateList[i].pattern("yyyy-MM-dd")}${this.mealTypeList[j]}${this.courseTypeList[k]}菜品添加失败，请重试`
+                    this.loading = false
                 })
-            // console.log("insert", i, j, k)
-            // this.$api.get("/api/Food/Insert", { food1, food2, food3, food4, food5, food6 })
-            //     .then(data => {
-            //         console.log(data)
-                    
-            //     })
-            //     .catch(error => {
-            //         this.failure = true
-            //         console.log(error)
-            //     })
         },
         // // 导出表格
         // exportExcel() {
@@ -266,6 +254,24 @@ export default {
 <style lang="scss">
 .meal-page {
     width: 100%;
+    position: relative;
+
+    .alert {
+        margin: 20px 0 10px;
+    }
+
+    .loading-wrapper {
+        width: 100%;
+        height: 100%;
+        background-color: #ffffff;
+        opacity: 0.8;
+        position: absolute;
+        top: 0;
+        z-index: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
 
     .datepicker-wrapper {
         width: 100%;

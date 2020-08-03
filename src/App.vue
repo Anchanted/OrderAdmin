@@ -7,7 +7,7 @@
                     <b-list-group-item :to="{ name: 'Meal' }" :active="$route.name === 'Meal'">餐品维护</b-list-group-item>
                     <b-list-group-item :to="{ name: 'DailyOrder' }" :active="$route.name === 'DailyOrder'">部门当日订餐单据</b-list-group-item>
                     <b-list-group-item :to="{ name: 'HistoryOrder' }" :active="$route.name === 'HistoryOrder'">部门历史订单统计</b-list-group-item>
-                    <b-list-group-item :to="{ name: 'EmployeeOrder' }" :active="$route.name === 'EmployeeOrder'">部门员工订单详情</b-list-group-item>
+                    <b-list-group-item :to="{ name: 'StaffOrder' }" :active="$route.name === 'StaffOrder'">部门员工订单详情</b-list-group-item>
                     <b-list-group-item :to="{ name: 'User' }" :active="$route.name === 'User'">用户管理</b-list-group-item>
                 </b-list-group>
             </div>
@@ -30,15 +30,62 @@ import { mapState } from "vuex"
 export default {
     computed: {
         ...mapState({
-            user: state => state.user
+            user: state => state.user,
+            apiStationList: state => state.apiStationList,
+            apiWellList: state => state.apiWellList,
+            apiRoleList: state => state.apiRoleList
         })
     },
     methods: {
         logout() {
+            localStorage.removeItem("user")
             this.$store.commit("setUser", null)
             this.$router.push({
                 name: "Login"
             })
+        }
+    },
+    watch: {
+        $route: {
+            immediate: true,
+            deep: true,
+            handler: function(to, from) {
+                if (to.name !== "Login" && to.name !== "PageNotFound") {
+                    if (!this.apiStationList.length) {
+                        console.log("update station list")
+                        this.$api.get("api/Station/Id")
+                            .then(data => {
+                                console.log(data)
+                                this.$store.commit("setApiStationList", data.data)
+                            })
+                            .catch(err => {
+                                console.log(err)
+                            })
+                    }
+                    if (!this.apiWellList.length) {
+                        console.log("update well list")
+                        this.$api.get("api/Well/Id")
+                            .then(data => {
+                                console.log(data)
+                                this.$store.commit("setApiWellList", data.data)
+                            })
+                            .catch(err => {
+                                console.log(err)
+                            })
+                    }
+                    if (!this.apiRoleList.length) {
+                        console.log("update role list")
+                        this.$api.get("api/Role/Id")
+                            .then(data => {
+                                console.log(data)
+                                this.$store.commit("setApiRoleList", data.data)
+                            })
+                            .catch(err => {
+                                console.log(err)
+                            })
+                    }
+                }
+            }
         }
     }
 }
@@ -57,19 +104,25 @@ html, body {
     -moz-osx-font-smoothing: grayscale;
     text-align: center;
     width: 100%;
-    height: 100%;
+    height: auto;
+    min-height: 100%;
+    position: absolute;
     color: #6c757d;
+    background-color: #fafbfe;
 
     .content-page {
         width: 100%;
         height: auto;
         min-height: 100%;
-        position: relative;
+        padding-left: 300px;
         display: flex;
 
         .vertical-navbar {
             width: 300px;
             height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
             flex-shrink: 0;
             background-color: #313a46;
 
@@ -116,6 +169,7 @@ html, body {
             .top-bar {
                 width: 100%;
                 height: 70px;
+                padding: 0 20px;
                 display: flex;
                 justify-content: flex-end;
                 align-items: center;
