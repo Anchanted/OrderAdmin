@@ -1,0 +1,52 @@
+{
+  "name": "ordermeal",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "test:unit": "vue-cli-service test:unit",
+    "lint": "vue-cli-service lint"
+  },
+  "dependencies": {
+    "bootstrap-vue": "^2.16.0",
+    "core-js": "^3.6.5",
+    "echarts": "^4.8.0",
+    "file-saver": "^2.0.2",
+    "jquery": "^3.5.1",
+    "node-sass": "^4.14.1",
+    "popper.js": "^1.16.1",
+    "raphael": "^2.3.0",
+    "sass-loader": "^9.0.2",
+    "vue": "^2.6.11",
+    "vue-morris": "^1.1.0",
+    "vue-router": "^3.2.0",
+    "vuex": "^3.4.0",
+    "xlsx": "^0.16.4"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "~4.4.0",
+    "@vue/cli-plugin-eslint": "~4.4.0",
+    "@vue/cli-plugin-router": "~4.4.0",
+    "@vue/cli-plugin-unit-mocha": "~4.4.0",
+    "@vue/cli-plugin-vuex": "~4.4.0",
+    "@vue/cli-service": "~4.4.0",
+    "@vue/eslint-config-standard": "^5.1.2",
+    "@vue/test-utils": "^1.0.3",
+    "axios": "^0.19.2",
+    "babel-eslint": "^10.1.0",
+    "bootstrap": "^4.5.0",
+    "chai": "^4.1.2",
+    "eslint": "^6.7.2",
+    "eslint-plugin-import": "^2.20.2",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.0",
+    "eslint-plugin-vue": "^6.2.2",
+    "less": "^3.0.4",
+    "less-loader": "^5.0.0",
+    "qs": "^6.9.4",
+    "script-loader": "^0.7.2",
+    "vue-template-compiler": "^2.6.11"
+  }
+}
