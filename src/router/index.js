@@ -3,7 +3,7 @@ import VueRouter from 'vue-router'
 import store from 'store'
 
 import Meal from 'views/Meal.vue'
-import EmployeeOrder from 'views/EmployeeOrder.vue'
+import StaffOrder from 'views/StaffOrder.vue'
 import DailyOrder from 'views/DailyOrder.vue'
 import HistoryOrder from 'views/HistoryOrder.vue'
 import Login from 'views/Login.vue'
@@ -45,9 +45,9 @@ const routes = [
         component: HistoryOrder
     },
     {
-        path: '/employeeorder',
-        name: 'EmployeeOrder',
-        component: EmployeeOrder
+        path: '/stafforder',
+        name: 'StaffOrder',
+        component: StaffOrder
     },
     {
         path: '/user',
@@ -74,8 +74,23 @@ const router = new VueRouter({
 })
 
 router.beforeEach((to, from, next) => {
-    if (to.name !== "Login" && store.state.user == null) next({ name: "Login" })
-    else next()
+    if (!from.name) {
+        const user = JSON.parse(localStorage.getItem("user"))
+        if (user) store.commit("setUser", user)
+    }
+
+    const now = new Date()
+    const expireDate = new Date(store.state.user?.expireDate || now)
+    if (expireDate <= now) store.commit("setUser", null)
+
+    if (!store.state.user) {
+        if (to.name !== "Login") next({ name: "Login" })
+        else next()
+    }
+    else {
+        if (to.name === "Login") next({ path: "/" })
+        else next()
+    }
 })
 
 export default router
