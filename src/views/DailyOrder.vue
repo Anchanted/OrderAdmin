@@ -18,7 +18,7 @@
         </b-form>
 
         <b-card>
-            <b-table-simple v-for="(order, index) in zoneList" :key="index" bordered>
+            <b-table-simple v-for="(order, index) in hallList" :key="index" bordered>
                 <b-thead head-variant="light">
                     <b-tr>
                         <b-th>日期</b-th>
@@ -26,7 +26,7 @@
                     </b-tr>
                     <b-tr>
                         <b-th>二级单位</b-th>
-                        <b-th colspan="2" width="70%">{{`${order.stationName}${order.zone ? `（${order.zone}）` : ""}`}}</b-th>
+                        <b-th colspan="2" width="70%">{{`${order.stationName}${order.hallId ? `（${order.hallName}）` : ""}`}}</b-th>
                     </b-tr>
                     <b-tr>
                         <b-th>餐别</b-th>
@@ -55,7 +55,7 @@
                     </b-tr>
                 </b-tfoot>
             </b-table-simple>
-            <div v-if="!zoneList.length">未找到当日订单</div>
+            <div v-if="!hallList.length">未找到当日订单</div>
         </b-card>
     </div>
 </template>
@@ -71,7 +71,7 @@ export default {
             options: [
                 { value: null, text: "--请选择一个二级单位--", disabled: true }
             ],
-            zoneList: [],
+            hallList: [],
             loading: false,
             errMsg: "",
         }
@@ -115,14 +115,14 @@ export default {
             else {
                 this.errMsg = ""
                 this.loading = true
-                this.$api.get("api/StationFoodData/BySysdate", { 
+                this.$api.get("/StationFoodData/BySysdate", { 
                     stationId: this.selectedStation.id,
                     time: this.dateStr
                 })
                 .then(data => {
                     console.log(data)
-                    const zoneList = data.data
-                    this.zoneList = zoneList.map(order => {
+                    const hallList = data.data
+                    this.hallList = hallList.map(order => {
                         const contentList = []
                         for (let i = 0; i < 3; i++) {
                             const mealType = []
@@ -153,11 +153,12 @@ export default {
                             date: new Date(order.dataTime).pattern("yyyy-MM-dd"),
                             stationId: order.stationId,
                             stationName: order.stationName,
-                            zone: order.zone,
+                            hallId: order.hallId,
+                            hallName: order.hallName,
                             content: contentList
                         }
                     })
-                    console.log(this.zoneList)
+                    console.log(this.hallList)
                     this.loading = false
                 })
                 .catch(err => {

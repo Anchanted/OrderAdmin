@@ -48,7 +48,7 @@ export default {
     },
     methods: {
         onSubmit(e) {
-            this.$api.post("/api/ulogin", { telephone: this.username, password: this.password })
+            this.$api.post("/ulogin", { telephone: this.username, password: this.password })
                 .then(data => {
                     console.log(data)
                     const user = data.data

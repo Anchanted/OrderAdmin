@@ -85,7 +85,7 @@ export default {
             else {
                 this.errMsg = ""
                 this.loading = true
-                this.$api.get("/api/FoodData/ByMoney", {
+                this.$api.get("/FoodData/ByMoney", {
                         stationId: this.selectedStation.id,
                         timeStart: this.startDateStr,
                         timeEnd: this.endDateStr

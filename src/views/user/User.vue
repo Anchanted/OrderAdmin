@@ -101,7 +101,7 @@ export default {
             else {
                 this.errMsg = ""
                 this.loading = true
-                this.$api.get("/api/ulogin/ByStationId", { 
+                this.$api.get("/ulogin/ByStationId", { 
                     telephone: this.telephone
                 })
                 .then(data => {
@@ -169,7 +169,7 @@ export default {
                         this.errMsg = ""
                         this.loading = true
 
-                        const data = await this.$api.get("/api/ulogin/Updata", params)
+                        const data = await this.$api.get("/ulogin/Updata", params)
                         console.log(data)
                         this.loading = false
 

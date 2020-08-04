@@ -81,27 +81,25 @@ export default {
         },
         disableInsert() {
             return (i, j, k) => {
-                if (this.menuList[i][j][k].id == null) {
-                    if (this.menuList[i][j][k].dishList.some(dish => dish != "")) {
-                        return false
-                    } else {
-                        return true
-                    }
-                } else {
+                if (this.menuList[i][j][k].id == null)
+                    return !this.menuList[i][j][k].dishList.some(dish => dish !== "")
+                else
                     return true
-                }
             }
         },
         disableUpdate() {
             return (i, j, k) => {
-                return this.menuList[i][j][k].id == null
+                if (this.menuList[i][j][k].id != null) 
+                    return !this.menuList[i][j][k].dishList.some((dish, index) => dish !== this.oldMenuList[i][j][k].dishList[index])
+                else
+                    return true
             }
         }
     },
     methods:{
         chooseDate() {
             const selectedDate = new Date(`${this.selectedDateStr} 00:00:00`)
-            const selectedWeekday =selectedDate.getDay() == 0 ? 7 :selectedDate.getDay()
+            const selectedWeekday = selectedDate.getDay() == 0 ? 7 :selectedDate.getDay()
             const monday = new Date(selectedDate.getTime() + (1 - selectedWeekday) * 24 * 3600 * 1000)
             const sunday = new Date(selectedDate.getTime() + (7 - selectedWeekday) * 24 * 3600 * 1000)
 
@@ -136,7 +134,7 @@ export default {
 
             this.errMsg = ""
             this.loading = true
-            this.$api.get("/api/Food/ByEtime", { 
+            this.$api.get("/Food/ByEtime", { 
                     pageNum: 1,
                     pageSize: 50,
                     timeStart: monday.pattern("yyyy-MM-dd"),
@@ -184,7 +182,7 @@ export default {
             console.log(params)
             this.errMsg = ""
             this.loading = true
-            this.$api.get("/api/Food/Updata", params)
+            this.$api.get("/Food/Updata", params)
                 .then(data => {
                     console.log(data)
                     if (data.result) {
@@ -209,7 +207,7 @@ export default {
             console.log(params)
             this.errMsg = ""
             this.loading = true
-            this.$api.get("/api/Food/Insert", params)
+            this.$api.get("/Food/Insert", params)
                 .then(data => {
                     console.log(data)
                     if (data.result) {

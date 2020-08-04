@@ -9,6 +9,7 @@ let service = axios.create({
 // 设置 post、put 默认 Content-Type
 service.defaults.headers.post['Content-Type'] = 'application/json'
 service.defaults.headers.put['Content-Type'] = 'application/json'
+service.defaults.baseURL = process.env.VUE_APP_BASE_API
 service.defaults.withCredentials = true
 
 // 添加请求拦截器
