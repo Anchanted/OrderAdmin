@@ -53,16 +53,6 @@ const routes = [
         path: '/user',
         name: 'User',
         component: User,
-    // children: [
-    //   {
-    //     path: "all",
-    //     component: UserAll
-    //   },
-    //   {
-    //     path: "single",
-    //     component: UserSingle
-    //   }
-    // ]
     }
 ]
 

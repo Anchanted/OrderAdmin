@@ -60,7 +60,7 @@
                         <template v-for="(mealType, i) in order.content">
                             <template v-for="(courseType, j) in mealType">
                                 <template v-for="(size, k) in courseType">
-                                    <b-td :key="`${i}|${j}|${k}`" :colspan="i === 0 ? 2 : 1"><span>{{size.count}}</span><span class="delimiter">/</span><span>{{size.price}}</span></b-td>
+                                    <b-td :key="`${i}|${j}|${k}`" :colspan="i === 0 ? 2 : 1"><span>{{size.count}}</span><span class="delimiter text-black-50">/</span><span>{{size.price}}</span></b-td>
                                 </template>
                             </template>
                         </template>
@@ -72,7 +72,7 @@
                         <template v-for="i in 3">
                             <template v-for="j in 2">
                                 <template v-for="k in 2">
-                                    <b-td v-if="!(i === 1 && k === 2)" :key="`${i}|${j}|${k}`" :colspan="i === 1 ? 2 : 1"><span>{{totalCount(i - 1, j - 1, k - 1)}}</span><span class="delimiter">/</span><span>{{totalPrice(i - 1, j - 1, k - 1)}}</span></b-td>
+                                    <b-td v-if="!(i === 1 && k === 2)" :key="`${i}|${j}|${k}`" :colspan="i === 1 ? 2 : 1"><span>{{totalCount(i - 1, j - 1, k - 1)}}</span><span class="delimiter text-black-50">/</span><span>{{totalPrice(i - 1, j - 1, k - 1)}}</span></b-td>
                                 </template>
                             </template>
                         </template>
@@ -148,7 +148,7 @@ export default {
             else {
                 this.errMsg = ""
                 this.loading = true
-                this.$api.get("/api/StationFoodData/ByHisdate", {
+                this.$api.get("/StationFoodData/ByHisdate", {
                         stationId: this.selectedStation.id,
                         timeStart: this.startDateStr,
                         timeEnd: this.endDateStr

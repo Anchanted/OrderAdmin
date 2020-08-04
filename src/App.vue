@@ -53,7 +53,7 @@ export default {
                 if (to.name !== "Login" && to.name !== "PageNotFound") {
                     if (!this.apiStationList.length) {
                         console.log("update station list")
-                        this.$api.get("api/Station/Id")
+                        this.$api.get("/Station/Id")
                             .then(data => {
                                 console.log(data)
                                 this.$store.commit("setApiStationList", data.data)
@@ -64,7 +64,7 @@ export default {
                     }
                     if (!this.apiWellList.length) {
                         console.log("update well list")
-                        this.$api.get("api/Well/Id")
+                        this.$api.get("/Well/Id")
                             .then(data => {
                                 console.log(data)
                                 this.$store.commit("setApiWellList", data.data)
@@ -75,7 +75,7 @@ export default {
                     }
                     if (!this.apiRoleList.length) {
                         console.log("update role list")
-                        this.$api.get("api/Role/Id")
+                        this.$api.get("/Role/Id")
                             .then(data => {
                                 console.log(data)
                                 this.$store.commit("setApiRoleList", data.data)
