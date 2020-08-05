@@ -6,13 +6,15 @@ import store from './store'
 import api from "./api"
 import mixin from "assets/js/mixin"
 
-import Blob from "./excel/Blob";
-import Export2Excel from "./excel/Export2Excel";
-
 import { BootstrapVue } from 'bootstrap-vue'
 Vue.use(BootstrapVue)
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
+
+import XLSX from "xlsx"
+import FileSaver from "file-saver"
+window.XLSX = XLSX
+window.FileSaver = FileSaver
 
 Vue.prototype.$api = api
 Vue.mixin(mixin)

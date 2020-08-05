@@ -44,7 +44,6 @@
                     <b-tr>
                         <b-th colspan="2">标准</b-th>
                         <b-th colspan="2">标准</b-th>
-                        <b-th>小</b-th>
                         <b-th>大</b-th>
                         <b-th>小</b-th>
                         <b-th>大</b-th>
@@ -52,6 +51,7 @@
                         <b-th>大</b-th>
                         <b-th>小</b-th>
                         <b-th>大</b-th>
+                        <b-th>小</b-th>
                     </b-tr>
                 </b-thead>
                 <b-tbody>
@@ -80,6 +80,10 @@
                 </b-tfoot>
             </b-table-simple>
         </b-card>
+
+        <div class="additional-wrapper">
+            <b-button variant="outline-primary" :disabled="!orderList.length" @click="exportAsExcel">导出为Excel表</b-button>
+        </div>
     </div>
 </template>
 
@@ -116,25 +120,6 @@ export default {
         },
     },
     methods:{
-        // 导出表格
-        exportExcel() {
-            require.ensure([], () => {
-                const { export_json_to_excel } = require("../excel/Export2Excel.js");
-
-                const tHeader = ["日期", "二级单位", "早餐A","数量", "早餐B","数量", "午餐A大份","数量", "午餐A小份","数量", "午餐B大份","数量", "午餐B小份","数量"];// 上面设置Excel的表格第一行的标题
-
-                const filterVal = ["id", "time", "img","hhh"]; // 上面的index、nickName、name是tableData里对象的属性
-            
-                const list = this.orderList;              //把data里的tableData存到list
-
-                const data = this.formatJson(filterVal, list);
-            
-                export_json_to_excel(tHeader, data, "列表excel");   //标题，数据，文件名
-            });
-        },
-        formatJson(filterVal, jsonData) {
-            return jsonData.map(v => filterVal.map(j => v[j]));
-        },
         chooseStartDate() {
             if (new Date(this.endDateStr) < new Date(this.startDateStr)) this.endDateStr = this.startDateStr
         },
@@ -204,6 +189,29 @@ export default {
                         this.loading = false
                     })
             }
+        },
+        exportAsExcel() {
+            const aoa = [
+                ["日期", "早餐", null, null, null, "午餐", null, null, null, null, null, null, null, "晚餐", null, null, null, null, null, null, null],
+                [null, "A", null, "B", null, "A", null, null, null, "B", null, null, null, "A", null, null, null, "B", null, null, null],
+                [null, "标准", null, "标准", null, "大", null, "小", null, "大", null, "小", null, "大", null, "小", null, "大", null, "小", null],
+            ]
+
+            this.orderList.forEach(order => {
+                const courseList = order.content || []
+                const subaoa = courseList.flat(4).flatMap(course => [course.count, course.price])
+                subaoa.unshift(order.date)
+                aoa.push(subaoa)
+            })
+
+            const sheet = XLSX.utils.aoa_to_sheet(aoa)
+            sheet['!merges'] = [
+                {s: {r: 0, c: 0}, e: {r: 2, c: 0}},
+                {s: {r: 0, c: 1}, e: {r: 0, c: 4}}, {s: {r: 0, c: 5}, e: {r: 0, c: 12}}, {s: {r: 0, c: 13}, e: {r: 0, c: 20}},
+                {s: {r: 1, c: 1}, e: {r: 1, c: 2}}, {s: {r: 1, c: 3}, e: {r: 1, c: 4}}, {s: {r: 1, c: 5}, e: {r: 1, c: 8}}, {s: {r: 1, c: 9}, e: {r: 1, c: 12}}, {s: {r: 1, c: 13}, e: {r: 1, c: 16}}, {s: {r: 1, c: 17}, e: {r: 1, c: 20}},
+                {s: {r: 2, c: 1}, e: {r: 2, c: 2}}, {s: {r: 2, c: 3}, e: {r: 2, c: 4}}, {s: {r: 2, c: 5}, e: {r: 2, c: 6}}, {s: {r: 2, c: 7}, e: {r: 2, c: 8}}, {s: {r: 2, c: 9}, e: {r: 2, c: 10}}, {s: {r: 2, c: 11}, e: {r: 2, c: 12}}, {s: {r: 2, c: 13}, e: {r: 2, c: 14}}, {s: {r: 2, c: 15}, e: {r: 2, c: 16}}, {s: {r: 2, c: 17}, e: {r: 2, c: 18}}, {s: {r: 2, c: 19}, e: {r: 2, c: 20}},
+            ]
+            FileSaver.saveAs(this.sheet2blob(sheet), `${this.selectedStation.stationName}历史订单（${this.startDateStr.replace(/\-/g, ".")} 至 ${this.endDateStr.replace(/\-/g, ".")}）.xlsx`)
         }
     },
     created() {
@@ -279,6 +287,13 @@ export default {
         .delimiter {
             margin: 10px;
         }
+    }
+
+    .additional-wrapper {
+        width: 100%;
+        padding: 10px 0;
+        display: flex;
+        justify-content: flex-end;
     }
 }
 </style>

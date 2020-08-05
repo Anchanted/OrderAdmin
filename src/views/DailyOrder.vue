@@ -90,25 +90,6 @@ export default {
         }
     },
     methods: {
-        // 导出表格
-        exportExcel() {
-            require.ensure([], () => {
-                const { export_json_to_excel } = require("../excel/Export2Excel.js");
-
-                const tHeader = ["部门", "餐别", "数量","是否领取"];// 上面设置Excel的表格第一行的标题
-
-                const filterVal = ["id", "time", "img","hhh"]; // 上面的index、nickName、name是tableData里对象的属性
-            
-                const list = this.orderList;              //把data里的tableData存到list
-
-                const data = this.formatJson(filterVal, list);
-            
-                export_json_to_excel(tHeader, data, "列表excel");   //标题，数据，文件名
-            });
-        },
-        formatJson(filterVal, jsonData) {
-            return jsonData.map(v => filterVal.map(j => v[j]));
-        },
         search() {
             if (!this.dateStr) alert("请选择订单日期")
             else if (!this.selectedStation) alert("请选择一个二级部门")

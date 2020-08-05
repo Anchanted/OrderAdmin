@@ -220,26 +220,7 @@ export default {
                     this.errMsg = `${this.dateList[i].pattern("yyyy-MM-dd")}${this.mealTypeList[j]}${this.courseTypeList[k]}菜品添加失败，请重试`
                     this.loading = false
                 })
-        },
-        // // 导出表格
-        // exportExcel() {
-        // require.ensure([], () => {
-        //     const { export_json_to_excel } = require("../excel/Export2Excel.js");
-
-        //     const tHeader = ["部门", "餐别", "数量","是否领取"];// 上面设置Excel的表格第一行的标题
-        //     const filterVal = ["id", "time", "img","hhh"]; // 上面的index、nickName、name是tableData里对象的属性
-        
-        //     const list = this.orderList;              //把data里的tableData存到list
-
-        //     const data = this.formatJson(filterVal, list);
-        
-        //     export_json_to_excel(tHeader, data, "列表excel");   //标题，数据，文件名
-        //     });
-        // },
-
-        // formatJson(filterVal, jsonData) {
-        //     return jsonData.map(v => filterVal.map(j => v[j]));
-        // },
+        }
     },
     mounted() {
         this.selectedDateStr = new Date().pattern("yyyy-MM-dd")
