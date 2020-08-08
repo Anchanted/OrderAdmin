@@ -7,7 +7,7 @@ import StaffOrder from 'views/StaffOrder.vue'
 import DailyOrder from 'views/DailyOrder.vue'
 import HistoryOrder from 'views/HistoryOrder.vue'
 import Login from 'views/Login.vue'
-import User from 'views/user/User.vue'
+import User from 'views/User.vue'
 import PageNotFound from 'views/404'
 
 Vue.use(VueRouter)

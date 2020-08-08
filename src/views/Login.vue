@@ -1,6 +1,6 @@
 <template>
     <div class="login-page">
-        <div class="login-title">移动点餐后台管理平台</div>
+        <div class="login-title">宾馆点餐后台管理平台</div>
         <b-card class="form-wrapper">
             <div v-if="failure" style="color: red;">用户名或密码错误</div>
             <b-form @submit.prevent="onSubmit">

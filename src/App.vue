@@ -17,7 +17,9 @@
                     <b-button variant="link" @click="logout">登出</b-button>
                 </div>
                 <b-link v-else :to="{ name: 'Login' }">登录</b-link>
-                <router-view />
+                <keep-alive>
+                    <router-view />
+                </keep-alive>
             </div>
         </div>
         <router-view v-else/>
@@ -67,7 +69,7 @@ export default {
                         this.$api.get("/Well/Id")
                             .then(data => {
                                 console.log(data)
-                                this.$store.commit("setApiWellList", data.data)
+                                this.$store.commit("setApiWellList", data.data.map(well => ({ wellId: well.id, ...well })))
                             })
                             .catch(err => {
                                 console.log(err)

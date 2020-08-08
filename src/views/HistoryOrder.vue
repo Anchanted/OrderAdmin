@@ -24,6 +24,10 @@
             <b-button type="submit" variant="secondary">查询</b-button>
         </b-form>
 
+        <div class="file-button-wrapper">
+            <b-button variant="primary" :disabled="!orderList.length" @click="exportExcel">导出为Excel表</b-button>
+        </div>
+
         <b-card>
             <b-table-simple bordered>
                 <b-thead head-variant="light">
@@ -80,10 +84,6 @@
                 </b-tfoot>
             </b-table-simple>
         </b-card>
-
-        <div class="additional-wrapper">
-            <b-button variant="outline-primary" :disabled="!orderList.length" @click="exportAsExcel">导出为Excel表</b-button>
-        </div>
     </div>
 </template>
 
@@ -190,28 +190,130 @@ export default {
                     })
             }
         },
-        exportAsExcel() {
-            const aoa = [
-                ["日期", "早餐", null, null, null, "午餐", null, null, null, null, null, null, null, "晚餐", null, null, null, null, null, null, null],
-                [null, "A", null, "B", null, "A", null, null, null, "B", null, null, null, "A", null, null, null, "B", null, null, null],
-                [null, "标准", null, "标准", null, "大", null, "小", null, "大", null, "小", null, "大", null, "小", null, "大", null, "小", null],
-            ]
+        // exportAsExcel() {
+        //     const aoa = [
+        //         ["日期", "早餐", null, null, null, "午餐", null, null, null, null, null, null, null, "晚餐", null, null, null, null, null, null, null],
+        //         [null, "A", null, "B", null, "A", null, null, null, "B", null, null, null, "A", null, null, null, "B", null, null, null],
+        //         [null, "标准", null, "标准", null, "大", null, "小", null, "大", null, "小", null, "大", null, "小", null, "大", null, "小", null],
+        //     ]
 
-            this.orderList.forEach(order => {
-                const courseList = order.content || []
-                const subaoa = courseList.flat(4).flatMap(course => [course.count, course.price])
-                subaoa.unshift(order.date)
-                aoa.push(subaoa)
+        //     this.orderList.forEach(order => {
+        //         const mealTypeList = order.content || []
+        //         const subaoa = mealTypeList.flat(4).flatMap(course => [course.count, course.price])
+        //         subaoa.unshift(order.date)
+        //         aoa.push(subaoa)
+        //     })
+
+        //     const sheet = XLSX.utils.aoa_to_sheet(aoa)
+        //     sheet['!merges'] = [
+        //         {s: {r: 0, c: 0}, e: {r: 2, c: 0}},
+        //         {s: {r: 0, c: 1}, e: {r: 0, c: 4}}, {s: {r: 0, c: 5}, e: {r: 0, c: 12}}, {s: {r: 0, c: 13}, e: {r: 0, c: 20}},
+        //         {s: {r: 1, c: 1}, e: {r: 1, c: 2}}, {s: {r: 1, c: 3}, e: {r: 1, c: 4}}, {s: {r: 1, c: 5}, e: {r: 1, c: 8}}, {s: {r: 1, c: 9}, e: {r: 1, c: 12}}, {s: {r: 1, c: 13}, e: {r: 1, c: 16}}, {s: {r: 1, c: 17}, e: {r: 1, c: 20}},
+        //         {s: {r: 2, c: 1}, e: {r: 2, c: 2}}, {s: {r: 2, c: 3}, e: {r: 2, c: 4}}, {s: {r: 2, c: 5}, e: {r: 2, c: 6}}, {s: {r: 2, c: 7}, e: {r: 2, c: 8}}, {s: {r: 2, c: 9}, e: {r: 2, c: 10}}, {s: {r: 2, c: 11}, e: {r: 2, c: 12}}, {s: {r: 2, c: 13}, e: {r: 2, c: 14}}, {s: {r: 2, c: 15}, e: {r: 2, c: 16}}, {s: {r: 2, c: 17}, e: {r: 2, c: 18}}, {s: {r: 2, c: 19}, e: {r: 2, c: 20}},
+        //     ]
+        //     FileSaver.saveAs(this.sheet2blob(sheet), `${this.selectedStation.stationName}历史订单（${this.startDateStr.replace(/\-/g, ".")} 至 ${this.endDateStr.replace(/\-/g, ".")}）.xlsx`)
+        // },
+        async exportExcel() {
+            const workbook = new Excel.Workbook()
+            const sheet = workbook.addWorksheet(this.selectedStation.stationName)
+
+            const rows = [
+                ["日期"],
+                [null],
+                [null],
+                [null]
+            ]
+            const mergeList = ["A1:A4"]
+            const borderColumnList = []
+            const borderRowList = [5]
+
+            const order = this.orderList[0]
+            const mealTypeList = order.content || []
+
+            const courseFieldArray = ["数量(份)", "价格(元)"]
+            mealTypeList.forEach((courseTypeList, i) => {
+                const mealTypeRowIndex = 0
+
+                borderColumnList.push(rows[mealTypeRowIndex].length + 1)
+                
+                const mealTypCellName = `${i === 0 ? "早" : (i === 1 ? "午" : "晚")}餐`
+                const mealTypeStartCol = String.fromCharCode(rows[mealTypeRowIndex].length + 'A'.charCodeAt())
+                courseTypeList.flat(4).flatMap(course => courseFieldArray).forEach((cell, index) => rows[mealTypeRowIndex].push(!index ? mealTypCellName : null))
+                const mealTypeEndCol = String.fromCharCode((rows[mealTypeRowIndex].length - 1) + 'A'.charCodeAt())
+                mergeList.push(`${mealTypeStartCol}${mealTypeRowIndex + 1}:${mealTypeEndCol}${mealTypeRowIndex + 1}`)
+
+                courseTypeList.forEach((sizeList, j) => {
+                    const courseTypeRowIndex = mealTypeRowIndex + 1
+                    const courseTypeCellName = String.fromCharCode(j + 'A'.charCodeAt()) 
+                    const courseTypeStartCol = String.fromCharCode(rows[courseTypeRowIndex].length + 'A'.charCodeAt())
+                    sizeList.flat(4).flatMap(course => courseFieldArray).forEach((cell, index) => rows[courseTypeRowIndex].push(!index ? courseTypeCellName : null))
+                    const courseTypeEndCol = String.fromCharCode((rows[courseTypeRowIndex].length - 1) + 'A'.charCodeAt())
+                    mergeList.push(`${courseTypeStartCol}${courseTypeRowIndex + 1}:${courseTypeEndCol}${courseTypeRowIndex + 1}`)
+
+                    sizeList.forEach((course, k) => {
+                        const sizeRowIndex = courseTypeRowIndex + 1
+                        const sizeCellName = k ? "小" : (i !== 0 ? "大" : "标准")
+                        const sizeStartCol = String.fromCharCode(rows[sizeRowIndex].length + 'A'.charCodeAt())
+                        courseFieldArray.forEach((cell, index) => {
+                            rows[sizeRowIndex].push(!index ? sizeCellName : null)
+                            rows[sizeRowIndex + 1].push(cell)
+                        })
+                        const sizeEndCol = String.fromCharCode((rows[sizeRowIndex].length - 1) + 'A'.charCodeAt())
+                        mergeList.push(`${sizeStartCol}${sizeRowIndex + 1}:${sizeEndCol}${sizeRowIndex + 1}`)
+                    })
+                })
             })
 
-            const sheet = XLSX.utils.aoa_to_sheet(aoa)
-            sheet['!merges'] = [
-                {s: {r: 0, c: 0}, e: {r: 2, c: 0}},
-                {s: {r: 0, c: 1}, e: {r: 0, c: 4}}, {s: {r: 0, c: 5}, e: {r: 0, c: 12}}, {s: {r: 0, c: 13}, e: {r: 0, c: 20}},
-                {s: {r: 1, c: 1}, e: {r: 1, c: 2}}, {s: {r: 1, c: 3}, e: {r: 1, c: 4}}, {s: {r: 1, c: 5}, e: {r: 1, c: 8}}, {s: {r: 1, c: 9}, e: {r: 1, c: 12}}, {s: {r: 1, c: 13}, e: {r: 1, c: 16}}, {s: {r: 1, c: 17}, e: {r: 1, c: 20}},
-                {s: {r: 2, c: 1}, e: {r: 2, c: 2}}, {s: {r: 2, c: 3}, e: {r: 2, c: 4}}, {s: {r: 2, c: 5}, e: {r: 2, c: 6}}, {s: {r: 2, c: 7}, e: {r: 2, c: 8}}, {s: {r: 2, c: 9}, e: {r: 2, c: 10}}, {s: {r: 2, c: 11}, e: {r: 2, c: 12}}, {s: {r: 2, c: 13}, e: {r: 2, c: 14}}, {s: {r: 2, c: 15}, e: {r: 2, c: 16}}, {s: {r: 2, c: 17}, e: {r: 2, c: 18}}, {s: {r: 2, c: 19}, e: {r: 2, c: 20}},
-            ]
-            FileSaver.saveAs(this.sheet2blob(sheet), `${this.selectedStation.stationName}历史订单（${this.startDateStr.replace(/\-/g, ".")} 至 ${this.endDateStr.replace(/\-/g, ".")}）.xlsx`)
+            sheet.addRows(rows)
+            mergeList.forEach(merge => sheet.mergeCells(merge))
+            sheet.getColumn(1).width = 12
+
+            this.orderList.forEach(order => {
+                const mealTypeList = order.content || []
+                const subaoa = mealTypeList.flat(4).flatMap(course => [course.count, course.price])
+                subaoa.unshift(order.date)
+                sheet.addRow(subaoa)
+            })
+
+            sheet.eachRow((row, rowNumber) => {
+                if (rowNumber <= 4) {
+                    row.font = { bold: true }
+                    row.alignment = { vertical: "middle", horizontal: "center" }
+                }
+
+                row.eachCell((cell, colNumber) => {
+                    cell.border = {
+                            ...cell.border,
+                            top: { style: rowNumber === 1 ? "thick" : "thin" },
+                            bottom: { style: rowNumber === sheet.rowCount ? "thick" : "thin" },
+                            right: { style: colNumber === sheet.columnCount ? "thick" : "thin" },
+                            left: { style: colNumber === 1 ? "thick" : "thin" },
+                        }
+
+                    if (borderRowList.includes(rowNumber)) {
+                        cell.border = {
+                            ...cell.border,
+                            top: { style: "double" }
+                        }
+                    }
+
+                    if (borderColumnList.includes(colNumber + 1)) {
+                        cell.border = {
+                            ...cell.border,
+                            right: { style: "thick" }
+                        }
+                    }
+                })
+            })
+
+            const buffer = await workbook.xlsx.writeBuffer()
+
+            // const buffer = await workbook.xlsx.writeBuffer();
+            // const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+            // const fileExtension = '.xlsx';
+            // const blob = new Blob([buffer], {type: fileType});
+
+            saveAs(new Blob([buffer]), `${this.selectedStation.stationName}历史订单（${this.startDateStr.replace(/-/g, ".")}-${this.endDateStr.replace(/-/g, ".")}）.xlsx`)
         }
     },
     created() {
@@ -237,7 +339,7 @@ export default {
         opacity: 0.8;
         position: absolute;
         top: 0;
-        z-index: 1;
+        z-index: 3;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -275,6 +377,13 @@ export default {
         }
     }
 
+    .file-button-wrapper {
+        width: 100%;
+        padding-bottom: 20px;
+        display: flex;
+        justify-content: flex-start;
+    }
+
     .b-table {
         margin: 0;
 
@@ -287,13 +396,6 @@ export default {
         .delimiter {
             margin: 10px;
         }
-    }
-
-    .additional-wrapper {
-        width: 100%;
-        padding: 10px 0;
-        display: flex;
-        justify-content: flex-end;
     }
 }
 </style>

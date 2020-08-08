@@ -32,7 +32,10 @@ service.interceptors.request.use(
 service.interceptors.response.use(
   (response) => {
     let { data } = response
-    return Promise.resolve(data)
+    if (data.data)
+      return Promise.resolve(data)
+    else
+      return Promise.reject(info)
   },
   (error) => {
     let info = {},
