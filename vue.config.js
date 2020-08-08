@@ -47,7 +47,7 @@ module.exports = {
     proxy: {                
       //名字可以自定义，这里我用的是api                
       '/api': {                  
-        target: 'https://yddc.oilhb.com:8097',//设置你调用的接口域名和端口号 别忘了加http      
+        target: 'https://172.16.0.102:8097',//设置你调用的接口域名和端口号 别忘了加http      
         changeOrigin: true,//这里设置是否跨域        
         ws: true, 
         // secure: false,         

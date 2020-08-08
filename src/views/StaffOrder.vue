@@ -40,6 +40,13 @@
                         <b-td></b-td>
                     </b-tr>
                 </b-tbody>
+                <b-tfoot>
+                    <b-tr>
+                        <b-td>总计</b-td>
+                        <b-td>{{staffList.reduce((acc, staff) => acc += staff.ncountMoney, 0)}}</b-td>
+                        <b-td></b-td>
+                    </b-tr>
+                </b-tfoot>
             </b-table-simple>
         </b-card>
     </div>
@@ -122,7 +129,7 @@ export default {
         opacity: 0.8;
         position: absolute;
         top: 0;
-        z-index: 1;
+        z-index: 3;
         display: flex;
         justify-content: center;
         align-items: center;

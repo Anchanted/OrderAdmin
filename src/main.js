@@ -13,8 +13,14 @@ import 'bootstrap-vue/dist/bootstrap-vue.css'
 
 import XLSX from "xlsx"
 import FileSaver from "file-saver"
+import md5 from "js-md5"
+import Excel from "exceljs"
+import "promise.allsettled"
+
 window.XLSX = XLSX
 window.FileSaver = FileSaver
+window.md5 = md5
+window.Excel = Excel
 
 Vue.prototype.$api = api
 Vue.mixin(mixin)
