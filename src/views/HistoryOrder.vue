@@ -25,7 +25,9 @@
         </b-form>
 
         <div class="file-button-wrapper">
-            <b-button variant="primary" :disabled="!orderList.length" @click="exportExcel">导出为Excel表</b-button>
+            <b-button variant="primary" :disabled="!orderList.length" @click="exportExcel">导出当前部门数据</b-button>
+            <b-button variant="primary" @click="exportExcelAll1">导出所有部门数据1</b-button>
+            <b-button variant="primary" @click="exportExcelAll2">导出所有部门数据2</b-button>
         </div>
 
         <b-card>
@@ -110,12 +112,12 @@ export default {
         }),
         totalCount() {
             return (i, j, k) => {
-                return !this.orderList.length ? "" : this.orderList.reduce((acc, order) => acc += order.content[i][j][k].count, 0)
+                return !this.orderList.length ? "" : this.orderList.reduce((acc, order) => acc + order.content[i][j][k].count, 0)
             }
         },
         totalPrice() {
             return (i, j, k) => { 
-                return !this.orderList.length ? "" : this.orderList.reduce((acc, order) => acc += order.content[i][j][k].price, 0)
+                return !this.orderList.length ? "" : this.orderList.reduce((acc, order) => acc + order.content[i][j][k].price, 0)
             }
         },
     },
@@ -215,32 +217,325 @@ export default {
         // },
         async exportExcel() {
             const workbook = new Excel.Workbook()
-            const sheet = workbook.addWorksheet(this.selectedStation.stationName)
+            const sheet = workbook.addWorksheet("Sheet1", { properties: { defaultColWidth: 5 } })
 
+            this.processStationData(sheet, this.orderList)
+
+            const buffer = await workbook.xlsx.writeBuffer()
+
+            // const buffer = await workbook.xlsx.writeBuffer();
+            // const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+            // const fileExtension = '.xlsx';
+            // const blob = new Blob([buffer], {type: fileType});
+
+            saveAs(new Blob([buffer]), `${this.selectedStation.stationName}历史订单（${this.startDateStr.replace(/-/g, ".")}-${this.endDateStr.replace(/-/g, ".")}）.xlsx`)
+        },
+        async exportExcelAll1() {
+            if (!this.startDateStr) {
+                alert("请选择起始日期")
+                return
+            }
+            if (!this.endDateStr) {
+                alert("请选择终止日期")
+                return
+            }
+            this.errMsg = ""
+            this.loading = true
+            let orderList = []
+            try {
+                const data = await this.$api.get("/StationFoodData/ByHisdate", {
+                    timeStart: this.startDateStr,
+                    timeEnd: this.endDateStr
+                })
+                console.log(data)
+
+                if (!data.data || !data.data.length) {
+                    alert("当前时间段无订单数据")
+                    return
+                }
+
+                orderList = data.data.map(order => {
+                    const contentList = []
+                    for (let i = 0; i < 3; i++) {
+                        const mealType = []
+                        for (let j = 0; j < 2; j++) {
+                            const courseType = []
+                            for (let k = 0; k < 2; k++) {
+                                if (!(i === 0 && k === 1)) {
+                                    courseType.push({
+                                        count: 0,
+                                        price: 0
+                                    })
+                                }
+                            }
+                            mealType.push(courseType)
+                        }
+                        contentList.push(mealType)
+                    }
+
+                    for (let key in order) {
+                        if (key.match(/^(morning|noon|night)([a-z])(max|min)?$/i)) {
+                            if (order[key]) {
+                                const mealType = RegExp.$1.toLowerCase() === "morning" ? 1 : (RegExp.$1.toLowerCase() === "noon" ? 2 : 3)
+                                const courseType = RegExp.$2.toUpperCase().charCodeAt() - 'A'.charCodeAt() + 1
+                                const size = !RegExp.$3 ? 0 : (RegExp.$3.toLowerCase() === "max" ? 0 : 1)
+                                contentList[mealType - 1][courseType - 1][size] = {
+                                    count: order[key],
+                                    price: order[`${key}Money`]
+                                }
+                            }
+                        }
+                    }
+
+                    return {
+                        date: new Date(order.dataTime).pattern("yyyy-MM-dd"),
+                        content: contentList,
+                        stationId: order.stationId,
+                        stationName: order.stationName
+                    }
+                })
+
+                orderList.sort((order1, order2) => new Date(order1.date) - new Date(order2.date))
+                this.loading = false
+            } catch (error) {
+                console.log(error)
+                this.errMsg = "数据加载失败，请重试"
+                this.loading = false
+                return
+            }
+
+            const workbook = new Excel.Workbook()
+            const sheet = workbook.addWorksheet("Sheet1", { properties: { defaultColWidth: 5 } })
+
+            const stationMap = new Map()
+            const dateMap = new Map()
+            orderList.forEach(order => {
+                if (!stationMap.has(order.stationId)) stationMap.set(order.stationId, [])
+                if (!dateMap.has(order.date)) dateMap.set(order.date, [])
+                stationMap.get(order.stationId).push(order)
+                dateMap.get(order.date).push(order)
+            })
+            const stationList = Array.from(stationMap.keys()).sort((a, b) => a - b).forEach(key => this.processStationData(sheet, stationMap.get(key), true))
+
+            const dateList = Array.from(dateMap.keys())
+                .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
+                .map(key => {
+                    const mealTypeList = []
+                    for (let i = 0; i < 3; i++) {
+                        const mealType = []
+                        for (let j = 0; j < 2; j++) {
+                            const courseType = []
+                            for (let k = 0; k < 2; k++) {
+                                if (!(i === 0 && k === 1)) {
+                                    courseType.push({
+                                        count: 0,
+                                        price: 0
+                                    })
+                                }
+                            }
+                            mealType.push(courseType)
+                        }
+                        mealTypeList.push(mealType)
+                    }
+
+                    return {
+                        date: key,
+                        stationName: "所有部门",
+                        content: dateMap.get(key).reduce((acc, order) => {
+                            for (let i = 0; i < 3; i++) {
+                                for (let j = 0; j < 2; j++) {
+                                    for (let k = 0; k < 2; k++) {
+                                        if (!(i === 0 && k === 1)) {
+                                            acc[i][j][k].count += order.content[i][j][k].count
+                                            acc[i][j][k].price += order.content[i][j][k].price
+                                        }
+                                    }
+                                }
+                            }
+                            return acc
+                        }, mealTypeList)
+                    }
+                })
+            this.processStationData(sheet, dateList, true)
+
+            const buffer = await workbook.xlsx.writeBuffer()
+            saveAs(new Blob([buffer]), `所有部门历史订单（${this.startDateStr.replace(/-/g, ".")}-${this.endDateStr.replace(/-/g, ".")}）.xlsx`)
+        },
+        async exportExcelAll2() {
+            if (!this.startDateStr) {
+                alert("请选择起始日期")
+                return
+            }
+            if (!this.endDateStr) {
+                alert("请选择终止日期")
+                return
+            }
+            this.errMsg = ""
+            this.loading = true
+            let orderList = []
+            try {
+                const data = await this.$api.get("/StationFoodData/ByHisdate", {
+                    timeStart: this.startDateStr,
+                    timeEnd: this.endDateStr
+                })
+                console.log(data)
+
+                if (!data.data || !data.data.length) {
+                    alert("当前时间段无订单数据")
+                    return
+                }
+
+                orderList = data.data.map(order => {
+                    const contentList = []
+                    for (let i = 0; i < 3; i++) {
+                        const mealType = []
+                        for (let j = 0; j < 2; j++) {
+                            const courseType = []
+                            for (let k = 0; k < 2; k++) {
+                                if (!(i === 0 && k === 1)) {
+                                    courseType.push({
+                                        count: 0,
+                                        price: 0
+                                    })
+                                }
+                            }
+                            mealType.push(courseType)
+                        }
+                        contentList.push(mealType)
+                    }
+
+                    for (let key in order) {
+                        if (key.match(/^(morning|noon|night)([a-z])(max|min)?$/i)) {
+                            if (order[key]) {
+                                const mealType = RegExp.$1.toLowerCase() === "morning" ? 1 : (RegExp.$1.toLowerCase() === "noon" ? 2 : 3)
+                                const courseType = RegExp.$2.toUpperCase().charCodeAt() - 'A'.charCodeAt() + 1
+                                const size = !RegExp.$3 ? 0 : (RegExp.$3.toLowerCase() === "max" ? 0 : 1)
+                                contentList[mealType - 1][courseType - 1][size] = {
+                                    count: order[key],
+                                    price: order[`${key}Money`]
+                                }
+                            }
+                        }
+                    }
+
+                    return {
+                        date: new Date(order.dataTime).pattern("yyyy-MM-dd"),
+                        content: contentList,
+                        stationId: order.stationId,
+                        stationName: order.stationName
+                    }
+                })
+
+                orderList.sort((order1, order2) => new Date(order1.date) - new Date(order2.date))
+                this.loading = false
+            } catch (error) {
+                console.log(error)
+                this.errMsg = "数据加载失败，请重试"
+                this.loading = false
+                return
+            }
+
+            const workbook = new Excel.Workbook()
+
+            const stationMap = new Map()
+            const dateMap = new Map()
+            orderList.forEach(order => {
+                if (!stationMap.has(order.stationId)) stationMap.set(order.stationId, [])
+                if (!dateMap.has(order.date)) dateMap.set(order.date, [])
+                stationMap.get(order.stationId).push(order)
+                dateMap.get(order.date).push(order)
+            })
+            const stationList = Array.from(stationMap.keys()).sort((a, b) => a - b).forEach(key => {
+                const sheet = workbook.addWorksheet(stationMap.get(key)[0].stationName, { properties: { defaultColWidth: 5 } })
+                this.processStationData(sheet, stationMap.get(key), true)
+            })
+
+            const dateList = Array.from(dateMap.keys())
+                .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
+                .map(key => {
+                    const mealTypeList = []
+                    for (let i = 0; i < 3; i++) {
+                        const mealType = []
+                        for (let j = 0; j < 2; j++) {
+                            const courseType = []
+                            for (let k = 0; k < 2; k++) {
+                                if (!(i === 0 && k === 1)) {
+                                    courseType.push({
+                                        count: 0,
+                                        price: 0
+                                    })
+                                }
+                            }
+                            mealType.push(courseType)
+                        }
+                        mealTypeList.push(mealType)
+                    }
+
+                    return {
+                        date: key,
+                        stationName: "所有部门",
+                        content: dateMap.get(key).reduce((acc, order) => {
+                            for (let i = 0; i < 3; i++) {
+                                for (let j = 0; j < 2; j++) {
+                                    for (let k = 0; k < 2; k++) {
+                                        if (!(i === 0 && k === 1)) {
+                                            acc[i][j][k].count += order.content[i][j][k].count
+                                            acc[i][j][k].price += order.content[i][j][k].price
+                                        }
+                                    }
+                                }
+                            }
+                            return acc
+                        }, mealTypeList)
+                    }
+                })
+            const sheet = workbook.addWorksheet(dateList[0].stationName, { properties: { defaultColWidth: 5 } })
+            this.processStationData(sheet, dateList, true)
+
+            const buffer = await workbook.xlsx.writeBuffer()
+            saveAs(new Blob([buffer]), `所有部门历史订单（${this.startDateStr.replace(/-/g, ".")}-${this.endDateStr.replace(/-/g, ".")}）.xlsx`)
+        },
+        processStationData(sheet, orderList, isAll = false) {
+            const startRowNum = sheet.rowCount + 1
             const rows = [
                 ["日期"],
                 [null],
                 [null],
                 [null]
             ]
-            const mergeList = ["A1:A4"]
             const borderColumnList = []
-            const borderRowList = [5]
+            const borderRowList = []
 
-            const order = this.orderList[0]
+            const order = orderList[0]
             const mealTypeList = order.content || []
 
-            const courseFieldArray = ["数量(份)", "价格(元)"]
-            mealTypeList.forEach((courseTypeList, i) => {
-                const mealTypeRowIndex = 0
+            const courseFieldArray = [
+                {
+                    title: "数量",
+                    key: "count" 
+                },
+                {
+                    title: "价格",
+                    key: "price" 
+                }
+            ]
 
-                borderColumnList.push(rows[mealTypeRowIndex].length + 1)
+            const mergeList = []
+            sheet.addRow([isAll ? order.stationName : this.selectedStation.stationName])
+            borderRowList.push(sheet.rowCount)
+            borderRowList.push(sheet.rowCount + rows.length)
+            mergeList.push(`A${sheet.rowCount}:${String.fromCharCode(mealTypeList.flat(4).flatMap(course => courseFieldArray).length + courseFieldArray.length + 'A'.charCodeAt())}${sheet.rowCount}`)
+            mergeList.push(`A${sheet.rowCount + 1}:A${sheet.rowCount + rows.length}`)
+
+            mealTypeList.forEach((courseTypeList, i) => {
+                borderColumnList.push(rows[0].length + 1)
                 
+                const mealTypeRowIndex = 0
                 const mealTypCellName = `${i === 0 ? "早" : (i === 1 ? "午" : "晚")}餐`
                 const mealTypeStartCol = String.fromCharCode(rows[mealTypeRowIndex].length + 'A'.charCodeAt())
                 courseTypeList.flat(4).flatMap(course => courseFieldArray).forEach((cell, index) => rows[mealTypeRowIndex].push(!index ? mealTypCellName : null))
                 const mealTypeEndCol = String.fromCharCode((rows[mealTypeRowIndex].length - 1) + 'A'.charCodeAt())
-                mergeList.push(`${mealTypeStartCol}${mealTypeRowIndex + 1}:${mealTypeEndCol}${mealTypeRowIndex + 1}`)
+                mergeList.push(`${mealTypeStartCol}${mealTypeRowIndex + sheet.rowCount + 1}:${mealTypeEndCol}${mealTypeRowIndex + sheet.rowCount + 1}`)
 
                 courseTypeList.forEach((sizeList, j) => {
                     const courseTypeRowIndex = mealTypeRowIndex + 1
@@ -248,52 +543,185 @@ export default {
                     const courseTypeStartCol = String.fromCharCode(rows[courseTypeRowIndex].length + 'A'.charCodeAt())
                     sizeList.flat(4).flatMap(course => courseFieldArray).forEach((cell, index) => rows[courseTypeRowIndex].push(!index ? courseTypeCellName : null))
                     const courseTypeEndCol = String.fromCharCode((rows[courseTypeRowIndex].length - 1) + 'A'.charCodeAt())
-                    mergeList.push(`${courseTypeStartCol}${courseTypeRowIndex + 1}:${courseTypeEndCol}${courseTypeRowIndex + 1}`)
+                    mergeList.push(`${courseTypeStartCol}${courseTypeRowIndex + sheet.rowCount + 1}:${courseTypeEndCol}${courseTypeRowIndex + sheet.rowCount + 1}`)
 
                     sizeList.forEach((course, k) => {
                         const sizeRowIndex = courseTypeRowIndex + 1
                         const sizeCellName = k ? "小" : (i !== 0 ? "大" : "标准")
                         const sizeStartCol = String.fromCharCode(rows[sizeRowIndex].length + 'A'.charCodeAt())
-                        courseFieldArray.forEach((cell, index) => {
+                        courseFieldArray.forEach((field, index) => {
                             rows[sizeRowIndex].push(!index ? sizeCellName : null)
-                            rows[sizeRowIndex + 1].push(cell)
+                            rows[sizeRowIndex + 1].push(field.title)
                         })
                         const sizeEndCol = String.fromCharCode((rows[sizeRowIndex].length - 1) + 'A'.charCodeAt())
-                        mergeList.push(`${sizeStartCol}${sizeRowIndex + 1}:${sizeEndCol}${sizeRowIndex + 1}`)
+                        mergeList.push(`${sizeStartCol}${sizeRowIndex + sheet.rowCount + 1}:${sizeEndCol}${sizeRowIndex + sheet.rowCount + 1}`)
                     })
                 })
             })
 
+            borderColumnList.push(rows[0].length + 1)
+            const verticalTotalStartCol = String.fromCharCode(rows[0].length + 'A'.charCodeAt())
+            rows.forEach((row, i) => {
+                courseFieldArray.forEach((field, j) => {
+                    if (i === 0 && j === 0) row.push("总计")
+                    else if (i === rows.length - 1) row.push(field.title)
+                    else row.push(null)
+                })
+            })            
+            const verticalTotalEndCol = String.fromCharCode((rows[0].length - 1) + 'A'.charCodeAt())
+            mergeList.push(`${verticalTotalStartCol}${sheet.rowCount + 1}:${verticalTotalEndCol}${sheet.rowCount + rows.length - 1}`)
+
             sheet.addRows(rows)
-            mergeList.forEach(merge => sheet.mergeCells(merge))
             sheet.getColumn(1).width = 12
+            courseFieldArray.forEach((field, i) => sheet.getColumn(sheet.columnCount - i).width = 6)
 
-            this.orderList.forEach(order => {
+            const dateTotalList = []
+            for (let i = 0; i < 3; i++) {
+                const mealType = []
+                for (let j = 0; j < 2; j++) {
+                    const courseType = []
+                    for (let k = 0; k < 2; k++) {
+                        if (!(i === 0 && k === 1)) {
+                            const course = {}
+                            courseFieldArray.forEach(({ key }) => course[key] = 0)
+                            courseType.push(course)
+                        }
+                    }
+                    mealType.push(courseType)
+                }
+                dateTotalList.push(mealType)
+            }
+
+            orderList.forEach(order => {
                 const mealTypeList = order.content || []
-                const subaoa = mealTypeList.flat(4).flatMap(course => [course.count, course.price])
-                subaoa.unshift(order.date)
-                sheet.addRow(subaoa)
-            })
+                const dateRow = mealTypeList.flat(4).flatMap(course => courseFieldArray.map(({ key }) => course[key]))
+                courseFieldArray.forEach((field, i) => dateRow.push(mealTypeList.flat(4).reduce((acc, course) => acc + course[field.key], 0)))
+                dateRow.unshift(order.date)
+                sheet.addRow(dateRow)
 
-            sheet.eachRow((row, rowNumber) => {
-                if (rowNumber <= 4) {
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 2; j++) {
+                        for (let k = 0; k < 2; k++) {
+                            if (!(i === 0 && k === 1)) {
+                                courseFieldArray.forEach(({ key }) => {
+                                    dateTotalList[i][j][k][key] += mealTypeList[i][j][k][key]
+                                })
+                            }
+                        }
+                    }
+                }
+            })
+            borderRowList.push(sheet.rowCount)
+            
+            const totalRows = []
+
+            const dateTotalRow = dateTotalList.flat(4).flatMap(course => courseFieldArray.map(({ key }) => course[key]))
+            dateTotalRow.unshift("小计")
+            totalRows.push(dateTotalRow)
+            
+            let courseTypeTotalRow = ["合计（类别）"]
+            dateTotalList.forEach((courseTypeList, i) => {
+                courseTypeList.forEach((sizeList, j) => {
+                    const subRow = sizeList.flat(4).flatMap(course => new Array(courseFieldArray.length).fill(null))
+                    courseFieldArray.forEach((field, n) => {
+                        subRow[subRow.length / courseFieldArray.length * n] = sizeList.flat(4).reduce((acc, course) => acc + course[field.key], 0)
+                        if (subRow.length / courseFieldArray.length > 1) {
+                            const startColIndex = courseTypeTotalRow.length + subRow.length / courseFieldArray.length * n
+                            const endColIndex = courseTypeTotalRow.length + subRow.length / courseFieldArray.length * (n + 1) - 1
+                            mergeList.push(`${String.fromCharCode(startColIndex + 'A'.charCodeAt())}${sheet.rowCount+ totalRows.length + 1}:${String.fromCharCode(endColIndex + 'A'.charCodeAt())}${sheet.rowCount+ totalRows.length + 1}`)
+                        }
+                    })
+                    courseTypeTotalRow = courseTypeTotalRow.concat(subRow)
+                })
+            })
+            totalRows.push(courseTypeTotalRow)
+
+            let sizeTotalRow = ["合计（大小）"]
+            dateTotalList.forEach((courseTypeList, i) => {
+                const subRow = courseTypeList.flat(4).flatMap(course => new Array(courseFieldArray.length).fill(null))
+                const sizeList = courseTypeList[0]
+                sizeList.forEach((course, k) => {
+                    courseFieldArray.forEach((field, n) => {
+                        subRow[subRow.length / sizeList.length * k + subRow.length / sizeList.length / courseFieldArray.length * n] = courseTypeList.reduce((acc, sizeList) => acc + sizeList[k][field.key], 0)
+                        if (subRow.length / sizeList.length / courseFieldArray.length > 1) {
+                            const startColIndex = sizeTotalRow.length + subRow.length / sizeList.length * k + subRow.length / sizeList.length / courseFieldArray.length * n
+                            const endColIndex = sizeTotalRow.length + subRow.length / sizeList.length * k + subRow.length / sizeList.length / courseFieldArray.length * (n + 1) - 1
+                            mergeList.push(`${String.fromCharCode(startColIndex + 'A'.charCodeAt())}${sheet.rowCount+ totalRows.length + 1}:${String.fromCharCode(endColIndex + 'A'.charCodeAt())}${sheet.rowCount+ totalRows.length + 1}`)
+                        }
+                    })
+                })
+                sizeTotalRow = sizeTotalRow.concat(subRow)
+            })
+            totalRows.push(sizeTotalRow)
+
+            let mealTypeRow = ["合计（饭点）"]
+            dateTotalList.forEach((courseTypeList, i) => {
+                const subRow = courseTypeList.flat(4).flatMap(course => new Array(courseFieldArray.length).fill(null))
+                courseFieldArray.forEach((field, n) => {
+                    subRow[subRow.length / courseFieldArray.length * n] = courseTypeList.flat(4).reduce((acc, course) => acc + course[field.key], 0)
+                    if (subRow.length / courseFieldArray.length > 1) {
+                        const startColIndex = mealTypeRow.length + subRow.length / courseFieldArray.length * n
+                        const endColIndex = mealTypeRow.length + subRow.length / courseFieldArray.length * (n + 1) - 1
+                        mergeList.push(`${String.fromCharCode(startColIndex + 'A'.charCodeAt())}${sheet.rowCount+ totalRows.length + 1}:${String.fromCharCode(endColIndex + 'A'.charCodeAt())}${sheet.rowCount+ totalRows.length + 1}`)
+                    }
+                })
+                mealTypeRow = mealTypeRow.concat(subRow)
+            })
+            totalRows.push(mealTypeRow)
+
+            // let totalRow = ["总计"]
+            // const subRow = dateTotalList.flat(4).flatMap(course => new Array(courseFieldArray.length).fill(null))
+            // courseFieldArray.forEach((field, n) => {
+            //     subRow[subRow.length / courseFieldArray.length * n] = dateTotalList.flat(4).reduce((acc, course) => acc + course[field.key], 0)
+            //     if (subRow.length / courseFieldArray.length > 1) {
+            //         const startColIndex = totalRow.length + subRow.length / courseFieldArray.length * n
+            //         const endColIndex = totalRow.length + subRow.length / courseFieldArray.length * (n + 1) - 1
+            //         mergeList.push(`${String.fromCharCode(startColIndex + 'A'.charCodeAt())}${sheet.rowCount+ totalRows.length + 1}:${String.fromCharCode(endColIndex + 'A'.charCodeAt())}${sheet.rowCount+ totalRows.length + 1}`)
+            //     }
+            // })
+            // totalRow = totalRow.concat(subRow)
+            // totalRows.push(totalRow)
+
+            totalRows.forEach((row, i) => {
+                courseFieldArray.forEach((field, j) => {
+                    if (i === totalRows.length - 1) 
+                        mergeList.push(`${String.fromCharCode(row.length + 'A'.charCodeAt())}${sheet.rowCount + 1}:${String.fromCharCode(row.length + 'A'.charCodeAt())}${sheet.rowCount + totalRows.length}`)
+                    row.push(i === 0 ? dateTotalList.flat(4).reduce((acc, course) => acc + course[field.key], 0) : null)
+                })
+            })
+            sheet.addRows(totalRows)
+
+            mergeList.forEach(merge => sheet.mergeCells(merge))
+
+            const endRowNum = sheet.rowCount
+            for (let rowNumber = startRowNum; rowNumber <= endRowNum; rowNumber++) {
+                const row = sheet.getRow(rowNumber)
+
+                if (rowNumber - startRowNum + 1 <= 1 + rows.length) {
                     row.font = { bold: true }
                     row.alignment = { vertical: "middle", horizontal: "center" }
                 }
 
                 row.eachCell((cell, colNumber) => {
                     cell.border = {
+                        ...cell.border,
+                        top: { style: rowNumber === startRowNum ? "thick" : "thin" },
+                        bottom: { style: rowNumber === endRowNum ? "thick" : "thin" },
+                        right: { style: colNumber === sheet.columnCount ? "thick" : "thin" },
+                        left: { style: colNumber === 1 ? "thick" : "thin" },
+                    }
+
+                    if (rowNumber === startRowNum && colNumber === sheet.columnCount) {
+                        cell.border = {
                             ...cell.border,
-                            top: { style: rowNumber === 1 ? "thick" : "thin" },
-                            bottom: { style: rowNumber === sheet.rowCount ? "thick" : "thin" },
-                            right: { style: colNumber === sheet.columnCount ? "thick" : "thin" },
-                            left: { style: colNumber === 1 ? "thick" : "thin" },
+                            left: { style: "thick" }
                         }
+                    }
 
                     if (borderRowList.includes(rowNumber)) {
                         cell.border = {
                             ...cell.border,
-                            top: { style: "double" }
+                            bottom: { style: "double" }
                         }
                     }
 
@@ -304,16 +732,9 @@ export default {
                         }
                     }
                 })
-            })
+            }
 
-            const buffer = await workbook.xlsx.writeBuffer()
-
-            // const buffer = await workbook.xlsx.writeBuffer();
-            // const fileType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-            // const fileExtension = '.xlsx';
-            // const blob = new Blob([buffer], {type: fileType});
-
-            saveAs(new Blob([buffer]), `${this.selectedStation.stationName}历史订单（${this.startDateStr.replace(/-/g, ".")}-${this.endDateStr.replace(/-/g, ".")}）.xlsx`)
+            sheet.addRow([])
         }
     },
     created() {
@@ -382,6 +803,10 @@ export default {
         padding-bottom: 20px;
         display: flex;
         justify-content: flex-start;
+
+        button {
+            margin-right: 20px;
+        }
     }
 
     .b-table {

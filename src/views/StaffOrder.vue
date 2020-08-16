@@ -43,7 +43,7 @@
                 <b-tfoot>
                     <b-tr>
                         <b-td>总计</b-td>
-                        <b-td>{{staffList.reduce((acc, staff) => acc += staff.ncountMoney, 0)}}</b-td>
+                        <b-td>{{staffList.reduce((acc, staff) => acc + staff.ncountMoney, 0)}}</b-td>
                         <b-td></b-td>
                     </b-tr>
                 </b-tfoot>
