@@ -18,7 +18,7 @@
         </b-form>
 
         <div class="file-button-wrapper">
-            <b-button variant="primary" @click="exportExcel">导出所有部门订餐当日订餐单据为Excel文件</b-button>
+            <b-button variant="primary" @click="exportExcel">导出所有部门订餐单据</b-button>
         </div>
 
         <b-card>
@@ -147,7 +147,7 @@ export default {
 
                 hallList.forEach(order => {
                     const mealTypeList = order.content
-                    const count = mealTypeList[i].flat(4).reduce((acc, course) => acc += course.count, 0)
+                    const count = mealTypeList[i].flat(4).reduce((acc, course) => acc + course.count, 0)
                     if (!count) return
 
                     const startRowNum = sheet.rowCount + 2
