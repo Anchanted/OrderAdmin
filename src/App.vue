@@ -21,6 +21,7 @@
                     <router-view />
                 </keep-alive>
             </div>
+            <div class="beian">冀ICP备B2-20060069-21号</div>
         </div>
         <router-view v-else/>
     </div>
@@ -108,7 +109,7 @@ html, body {
     width: 100%;
     height: auto;
     min-height: 100%;
-    position: absolute;
+    position: relative;
     color: #6c757d;
     background-color: #fafbfe;
 
@@ -181,8 +182,15 @@ html, body {
                 left: 0;
             }
         }
+
+        .beian {
+            width: 300px;
+            position: absolute;
+            left: 0;
+            bottom: 5px;
+            text-align: center;
+            color: #888888;
+        }
     }
-
 }
-
 </style>
