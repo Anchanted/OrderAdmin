@@ -27,6 +27,8 @@
                 <b-button type="submit" variant="primary">提交</b-button>
             </b-form>
         </b-card>
+
+        <div class="beian">冀ICP备B2-20060069-21号</div>
     </div>
 </template>
 
@@ -97,6 +99,14 @@ export default {
     .form-wrapper {
         width: 500px;
         margin-bottom: 100px;
+    }
+
+    .beian {
+        width: 100%;
+        position: absolute;
+        bottom: 20px;
+        text-align: center;
+        color: #888888;
     }
 }
 </style>
